@@ -1,0 +1,66 @@
+---
+include:
+  - project: "backend/ci-templates"
+    ref: 0.2.18
+    file:
+      - "/templates/autoversion.gitlab-ci.yml"
+  - "/helm/.gitlab-ci.yml"
+
+variables:
+  APP_NAME: "rerun"
+  REGISTRY_NAME: "wandelbots.azurecr.io/nova-apps/rerun"
+  GIT_USER: "pycop-bot"
+  GIT_TOKEN: $PYCOP_ACCESS_TOKEN
+
+stages:
+  - version 
+  - test
+  - build
+  - deploy
+
+.docker:
+  image: container-registry.wabo.run/docker-hub/library/docker:27
+  variables:
+    DOCKER_DRIVER: overlay2
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ''
+  services:
+    - name: container-registry.wabo.run/docker-hub/library/docker:25-dind
+      alias: docker
+      command: [ "--tls=false" ]
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    # harbor still needed for the docker builds as we might pull images from this mirror
+    - docker login -u $HARBOR_ROBOT_USER -p $HARBOR_ROBOT_TOKEN container-registry.wabo.run
+    - docker login -u $PUBLIC_REGISTRY_CI_SCOPE_NOVA_APPS_USERNAME -p $PUBLIC_REGISTRY_CI_SCOPE_NOVA_APPS_PASSWORD $PUBLIC_REGISTRY_HOST
+
+bump-version:
+  extends: .autoversion-bump-push
+  stage: version
+
+build-docker:
+  stage: build
+  extends: .docker
+  except:
+    - main
+  dependencies:
+    - bump-version
+  script:
+    - !reference [.autoversion-version-var]
+    - image="${REGISTRY_NAME}:${version}"
+    - echo "building image ${image}"
+    - docker image build --tag ${image} .
+
+build_and_push_docker:
+  stage: build
+  extends: .docker
+  only:
+    - main
+  dependencies:
+    - bump-version
+  script:
+    - !reference [.autoversion-version-var]
+    - image="${REGISTRY_NAME}:${version}"
+    - echo "building image ${image}"
+    - docker build --tag ${image} .
+    - docker push ${image}
