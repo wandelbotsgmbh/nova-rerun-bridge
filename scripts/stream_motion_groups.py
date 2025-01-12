@@ -140,7 +140,9 @@ async def process_motion_group_state():
             static_transform=True,
             base_entity_path=motion_group,
             albedo_factor=[0, 255, 100],
+            glb_path=f"models/{active_motion_group.model_from_controller}.glb",
         )
+        
         """
         mesh_visualizer = RealRobotVisualizer(
             glb_path=f"models/{active_motion_group.model_from_controller}.glb",
