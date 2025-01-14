@@ -4,7 +4,7 @@ import rerun as rr
 import asyncio
 import trimesh
 import wandelbots_api_client as wb
-from robot_safety_visualizer import RobotVisualizer
+from scripts.robot_visualizer import RobotVisualizer
 from hull_visualizer import HullVisualizer
 from utils import get_api_client
 from dh_robot import DHRobot

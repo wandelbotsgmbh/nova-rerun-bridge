@@ -1,9 +1,9 @@
+import numpy as np
 import rerun as rr
 import asyncio
 import wandelbots_api_client as wb
 from hull_visualizer import HullVisualizer
-from robot_safety_visualizer import RobotVisualizer
-from robot_visualizer import RealRobotVisualizer
+from robot_visualizer import RobotVisualizer
 
 from utils import get_api_client
 from dh_robot import DHRobot
@@ -21,10 +21,12 @@ async def fetch_optimizer_config(
     return await motion_group_infos_api.get_optimizer_configuration(cell_id, motion_group)
 
 
-def log_safety_zones_once(motion_group: str, optimizer_config):
+def log_safety_zones_once(motion_group: str, optimizer_config, robot: DHRobot):
     """
     Log hull outlines for the safety zones defined in the optimizer configuration.
     """
+    mounting_transform = optimizer_config.mounting
+
     for zone in optimizer_config.safety_setup.safety_zones:
         geom = zone.geometry
         zone_id = zone.id
@@ -44,6 +46,9 @@ def log_safety_zones_once(motion_group: str, optimizer_config):
         else:
             polygons = []
 
+        accumulated = robot.pose_to_matrix(mounting_transform)
+        polygons = apply_transform_to_polygons(polygons, accumulated)
+
         # Log polygons as wireframe outlines
         if polygons:
             line_segments = [p.tolist() for p in polygons]  # convert numpy arrays to lists
@@ -55,6 +60,21 @@ def log_safety_zones_once(motion_group: str, optimizer_config):
                 static=True,
                 timeless=True,
             )
+
+
+def apply_transform_to_polygons(polygons, transform):
+    """
+    Apply a transformation matrix to a list of polygons.
+    """
+    transformed_polygons = []
+    for polygon in polygons:
+        # Convert polygon to homogeneous coordinates
+        homogeneous_polygon = np.hstack((polygon, np.ones((polygon.shape[0], 1))))
+        # Apply the transformation
+        transformed_polygon = np.dot(transform, homogeneous_polygon.T).T
+        # Convert back to 3D coordinates
+        transformed_polygons.append(transformed_polygon[:, :3])
+    return transformed_polygons
 
 def log_joint_positions_once(motion_group: str, robot: DHRobot, joint_position):
     """Compute and log joint positions for a robot."""
@@ -140,16 +160,11 @@ async def process_motion_group_state():
             static_transform=True,
             base_entity_path=motion_group,
             albedo_factor=[0, 255, 100],
-        )
-        """
-        mesh_visualizer = RealRobotVisualizer(
             glb_path=f"models/{active_motion_group.model_from_controller}.glb",
-            root_path=f"{motion_group}/visual",
         )
-        """
-
+        
         # Log safety zones (only once)
-        log_safety_zones_once(motion_group, optimizer_config)
+        log_safety_zones_once(motion_group, optimizer_config, robot)
 
         print(f"Subscribing to motion group {motion_group}", flush=True)
         async for state in motion_group_infos_api.stream_motion_group_state("cell", motion_group):
@@ -160,8 +175,6 @@ async def process_motion_group_state():
                 # Log robot geometries
                 visualizer.log_robot_geometry(state.state.joint_position)
                 
-                # mesh_visualizer.update_all_joints(state.state.joint_position.joints)
-
                 processor.log_tcp_orientation(motion_group, state.state.tcp_pose)
 
             await asyncio.sleep(0.01)  # Prevents CPU overuse
