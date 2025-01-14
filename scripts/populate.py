@@ -91,7 +91,7 @@ def configure_tcp_line_colors():
         ("tcp_orientation_velocity_limit", [255, 0, 0]),
     ]
     for name, color in series_specs:
-        rr.log(f"motion/{name}", rr.SeriesLine(color=color, name=name))
+        rr.log(f"motion/{name}", rr.SeriesLine(color=color, name=name), timeless=True)
 
 
 def joint_content_lists():
@@ -194,7 +194,9 @@ def get_default_blueprint(motion_group_list: list):
                         time_ranges=time_ranges,
                         plot_legend=plot_legend,
                     ),
+                    rrb.TextLogView(origin="/logs", name="Logs"),
                     name="Trajectory quantities",
+                    row_shares=[1, 1, 1, 1, 0.5],
                 ),
                 rrb.Vertical(
                     rrb.TimeSeriesView(
@@ -236,7 +238,7 @@ def get_default_blueprint(motion_group_list: list):
                     plot_legend=plot_legend,
                 ),
             ),
-            rrb.TextLogView(origin="/logs", name="Logs"),
+            column_shares=[1, 0.3],
         ),
         collapse_panels=True,
     )

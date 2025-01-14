@@ -236,7 +236,7 @@ class RobotVisualizer:
 
             self.logged_meshes.add(entity_path)
 
-    def init_geometry(self, entity_path: str, capsule, link_index):
+    def init_geometry(self, entity_path: str, capsule):
         """Generic method to log a single geometry, either capsule or box."""
 
         if entity_path not in self.logged_meshes:
@@ -338,7 +338,7 @@ class RobotVisualizer:
                 entity_path = f"{self.base_entity_path}/collision/links/link_{link_index}/geometry_{i}"
                 final_transform = link_transform @ self.geometry_pose_to_matrix(geom.init_pose)
                 
-                self.init_geometry(entity_path, geom.capsule, link_index)
+                self.init_geometry(entity_path, geom.capsule)
                 log_geometry(entity_path, final_transform)
 
         # Log TCP geometries
@@ -348,7 +348,7 @@ class RobotVisualizer:
                 entity_path = f"{self.base_entity_path}/collision/tcp/geometry_{i}"
                 final_transform = tcp_transform @ self.geometry_pose_to_matrix(geom.init_pose)
 
-                self.init_geometry(entity_path, geom.capsule, link_index)
+                self.init_geometry(entity_path, geom.capsule)
                 log_geometry(entity_path, final_transform)
 
     def log_robot_geometries(self, trajectory: List[wb.models.TrajectorySample], times_column):
@@ -405,7 +405,6 @@ class RobotVisualizer:
                         # DH theta is rotated, rotate mesh around z in direction of theta
                         rotation_matrix_z_4x4 = np.eye(4)
                         if len(self.robot.dh_parameters) > link_index:
-                            print(f"theta: {self.robot.dh_parameters[link_index].theta}")
                             rotation_z_minus_90 = Rotation.from_euler('z', self.robot.dh_parameters[link_index].theta, degrees=False).as_matrix()
                             rotation_matrix_z_4x4[:3, :3] = rotation_z_minus_90
                         
