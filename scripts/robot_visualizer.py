@@ -55,12 +55,10 @@ class RobotVisualizer:
             print(f"Failed to load mesh: {e}")
             self.scene = None
             
-
         # Group geometries by link
         for gm in robot_model_geometries:
             self.link_geometries.setdefault(gm.link_index, []).append(gm.geometry)
     
-
     def discover_joints(self):
         """
         Find all child node names that contain '_J0' followed by digits or '_FLG'.
@@ -88,14 +86,14 @@ class RobotVisualizer:
     
         matches.sort(key=lambda x: x[0])
         self.joint_names = [name for _, name in matches] + flg_nodes
-        print("Discovered nodes:", self.joint_names)
         
+        # print("Discovered nodes:", self.joint_names)
         # Print layer information for each joint
         for joint in self.joint_names:
             same_layer_nodes = self.get_nodes_on_same_layer(joint_parents[joint], joint)
-            print(f"\nNodes on same layer as {joint}:")
-            print(f"Parent node: {joint_parents[joint]}")
-            print(f"Layer nodes: {same_layer_nodes}")
+            # print(f"\nNodes on same layer as {joint}:")
+            # print(f"Parent node: {joint_parents[joint]}")
+            # print(f"Layer nodes: {same_layer_nodes}")
     
     def get_nodes_on_same_layer(self, parent_node, joint):
         """
