@@ -31,7 +31,7 @@ def configure_joint_line_colors():
     Log the visualization lines for joint limit boundaries.
     """
     for i in range(1, 7):
-        prefix = f"motion/joint"
+        prefix = "motion/joint"
         rr.log(
             f"{prefix}_velocity_lower_limit_{i}",
             rr.SeriesLine(color=[255, 0, 0], name=f"joint_velocity_lower_limit_{i}"),
@@ -435,63 +435,78 @@ def log_scalar_values(
                 components=[rr.components.ScalarBatch(values)],
             )
 
+
 def log_colliders_once(colliders: Dict[str, wb.models.Collider]):
     for collider_id, collider in colliders.items():
-            
         # Default components
         default_position = wb.models.Vector3d(x=0.0, y=0.0, z=0.0)
         default_orientation = wb.models.Vector3d(x=0.0, y=0.0, z=0.0)
-        
+
         # Check pose and its components
-        pose = collider.pose if collider.pose is not None else wb.models.Pose(
-            position=default_position,
-            orientation=default_orientation
+        pose = (
+            collider.pose
+            if collider.pose is not None
+            else wb.models.Pose(position=default_position, orientation=default_orientation)
         )
-        
+
         # Handle position - convert list to Vector3d if needed
         if isinstance(pose.position, list):
             position = wb.models.Vector3d(
-                x=float(pose.position[0]),
-                y=float(pose.position[1]),
-                z=float(pose.position[2])
+                x=float(pose.position[0]), y=float(pose.position[1]), z=float(pose.position[2])
             )
         else:
-            position = pose.position if hasattr(pose, 'position') and pose.position is not None else default_position
+            position = (
+                pose.position
+                if hasattr(pose, "position") and pose.position is not None
+                else default_position
+            )
 
         # Handle orientation - convert list to Vector3d if needed
         if isinstance(pose.orientation, list):
             orientation = wb.models.Vector3d(
                 x=float(pose.orientation[0]),
                 y=float(pose.orientation[1]),
-                z=float(pose.orientation[2])
+                z=float(pose.orientation[2]),
             )
         else:
-            orientation = pose.orientation if hasattr(pose, 'orientation') and pose.orientation is not None else default_orientation
-        
-        pose = wb.models.Pose(position=position, orientation=orientation)
-        
-        rotation_vector = [pose.orientation.x, pose.orientation.y, pose.orientation.z]
-        rotation = R.from_rotvec(rotation_vector)
-        angle = rotation.magnitude() if rotation.magnitude() != 0 else 0.0
-        axis_angle = rotation.as_rotvec() / angle if angle != 0 else [1, 0, 0]
+            orientation = (
+                pose.orientation
+                if hasattr(pose, "orientation") and pose.orientation is not None
+                else default_orientation
+            )
 
-        if collider.shape.actual_instance.shape_type == "sphere":            
+        pose = wb.models.Pose(position=position, orientation=orientation)
+
+        # rotation_vector = [pose.orientation.x, pose.orientation.y, pose.orientation.z]
+        # rotation = R.from_rotvec(rotation_vector)
+        # angle = rotation.magnitude() if rotation.magnitude() != 0 else 0.0
+        # axis_angle = rotation.as_rotvec() / angle if angle != 0 else [1, 0, 0]
+
+        if collider.shape.actual_instance.shape_type == "sphere":
             rr.log(
                 f"colliders/{collider_id}",
                 rr.Ellipsoids3D(
-                    radii=[collider.shape.actual_instance.radius, collider.shape.actual_instance.radius, collider.shape.actual_instance.radius],
+                    radii=[
+                        collider.shape.actual_instance.radius,
+                        collider.shape.actual_instance.radius,
+                        collider.shape.actual_instance.radius,
+                    ],
                     centers=[[pose.position.x, pose.position.y, pose.position.z]],
                     colors=[(221, 193, 193, 255)],
                 ),
                 timeless=True,
             )
-        
+
         elif collider.shape.actual_instance.shape_type == "box":
             rr.log(
                 f"colliders/{collider_id}",
                 rr.Boxes3D(
                     centers=[[pose.position.x, pose.position.y, pose.position.z]],
-                    half_sizes=[collider.shape.actual_instance.size_x, collider.shape.actual_instance.size_y, collider.shape.actual_instance.size_z],
+                    half_sizes=[
+                        collider.shape.actual_instance.size_x,
+                        collider.shape.actual_instance.size_y,
+                        collider.shape.actual_instance.size_z,
+                    ],
                     colors=[(221, 193, 193, 255)],
                 ),
                 timeless=True,
@@ -500,21 +515,23 @@ def log_colliders_once(colliders: Dict[str, wb.models.Collider]):
         elif collider.shape.actual_instance.shape_type == "capsule":
             height = collider.shape.actual_instance.cylinder_height
             radius = collider.shape.actual_instance.radius
-            
+
             # Generate trimesh capsule
             capsule = trimesh.creation.capsule(height=height, radius=radius, count=[6, 8])
-            
+
             # Extract vertices and faces for solid visualization
             vertices = np.array(capsule.vertices)
-            
+
             # Transform vertices to world position
             transform = np.eye(4)
-            transform[:3,3] = [pose.position.x, pose.position.y, pose.position.z - height/2]
-            rot_mat = R.from_rotvec(np.array([pose.orientation.x, pose.orientation.y, pose.orientation.z]))
-            transform[:3,:3] = rot_mat.as_matrix()
-            
-            vertices = np.array([transform @ np.append(v, 1) for v in vertices])[:,:3]
-            
+            transform[:3, 3] = [pose.position.x, pose.position.y, pose.position.z - height / 2]
+            rot_mat = R.from_rotvec(
+                np.array([pose.orientation.x, pose.orientation.y, pose.orientation.z])
+            )
+            transform[:3, :3] = rot_mat.as_matrix()
+
+            vertices = np.array([transform @ np.append(v, 1) for v in vertices])[:, :3]
+
             polygons = HullVisualizer.compute_hull_outlines_from_points(vertices)
 
             if polygons:
@@ -522,25 +539,32 @@ def log_colliders_once(colliders: Dict[str, wb.models.Collider]):
                 rr.log(
                     f"colliders/{collider_id}",
                     rr.LineStrips3D(
-                        line_segments, radii=rr.Radius.ui_points(0.75), colors=[[221, 193, 193, 255]]
+                        line_segments,
+                        radii=rr.Radius.ui_points(0.75),
+                        colors=[[221, 193, 193, 255]],
                     ),
                     static=True,
                     timeless=True,
                 )
 
-        elif collider.shape.actual_instance.shape_type == "convex_hull":            
-            polygons = HullVisualizer.compute_hull_outlines_from_points(collider.shape.actual_instance.vertices)
+        elif collider.shape.actual_instance.shape_type == "convex_hull":
+            polygons = HullVisualizer.compute_hull_outlines_from_points(
+                collider.shape.actual_instance.vertices
+            )
 
             if polygons:
                 line_segments = [p.tolist() for p in polygons]
                 rr.log(
                     f"colliders/{collider_id}",
                     rr.LineStrips3D(
-                        line_segments, radii=rr.Radius.ui_points(0.75), colors=[[221, 193, 193, 255]]
+                        line_segments,
+                        radii=rr.Radius.ui_points(0.75),
+                        colors=[[221, 193, 193, 255]],
                     ),
                     static=True,
                     timeless=True,
                 )
+
 
 def process_trajectory(
     robot: DHRobot,
@@ -673,7 +697,9 @@ async def process_motions():
                 optimizer_config = await motion_group_infos_api.get_optimizer_configuration(
                     "cell", motion.motion_group
                 )
-                trajectory = await motion_api.get_motion_trajectory("cell", motion_id, int(RECORDING_INTERVAL*1000))
+                trajectory = await motion_api.get_motion_trajectory(
+                    "cell", motion_id, int(RECORDING_INTERVAL * 1000)
+                )
 
                 # Configure logging blueprints only if motion_group_list has changed
                 motion_groups = await motion_group_api.list_motion_groups("cell")
@@ -688,7 +714,14 @@ async def process_motions():
                 if motion_id in processed_motion_ids:
                     continue
 
-                motion_motion_group = next((mg for mg in motion_groups.instances if mg.motion_group == motion.motion_group), None)
+                motion_motion_group = next(
+                    (
+                        mg
+                        for mg in motion_groups.instances
+                        if mg.motion_group == motion.motion_group
+                    ),
+                    None,
+                )
 
                 await fetch_and_process_motion(
                     motion_id=motion_id,

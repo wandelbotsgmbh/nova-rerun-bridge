@@ -76,6 +76,7 @@ def apply_transform_to_polygons(polygons, transform):
         transformed_polygons.append(transformed_polygon[:, :3])
     return transformed_polygons
 
+
 def log_joint_positions_once(motion_group: str, robot: DHRobot, joint_position):
     """Compute and log joint positions for a robot."""
     joint_positions = robot.calculate_joint_positions(joint_position)
@@ -87,6 +88,7 @@ def log_joint_positions_once(motion_group: str, robot: DHRobot, joint_position):
         rr.LineStrips3D(line_segments, colors=[[0.5, 1.0, 0.5, 1.0]]),
         static=True,
     )
+
 
 class MotionGroupProcessor:
     def __init__(self):
@@ -162,7 +164,7 @@ async def process_motion_group_state():
             albedo_factor=[0, 255, 100],
             glb_path=f"models/{active_motion_group.model_from_controller}.glb",
         )
-        
+
         # Log safety zones (only once)
         log_safety_zones_once(motion_group, optimizer_config, robot)
 
@@ -174,7 +176,7 @@ async def process_motion_group_state():
 
                 # Log robot geometries
                 visualizer.log_robot_geometry(state.state.joint_position)
-                
+
                 processor.log_tcp_orientation(motion_group, state.state.tcp_pose)
 
             await asyncio.sleep(0.01)  # Prevents CPU overuse

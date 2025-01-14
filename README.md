@@ -1,10 +1,10 @@
 # nova rerun bridge
 
-Visualizes the state of your nova instance inside of [rerun.io](https://rerun.io). This is intendet to be used alongside the [nova python lib](https://github.com/wandelbotsgmbh/wandelbots-nova). You will need a running nova instance. Register on [wandelbots.com](https://www.wandelbots.com/) to get access. 
+Visualizes the state of your nova instance inside of [rerun.io](https://rerun.io). This is intended to be used alongside the [nova python lib](https://github.com/wandelbotsgmbh/wandelbots-nova). You will need a running nova instance. Register on [wandelbots.com](https://www.wandelbots.com/) to get access.
 
 The visualization supports:
 
-- robot
+- robot (see a [list](https://wandelbotsgmbh.github.io/wandelbots-js-react-components/?path=/story/3d-view-robot-supported-models) of supported robots)
 - trajectory
 - dh parameters of robot
 - collision model of robot
@@ -21,10 +21,22 @@ to use it on your nova instance.
 
 https://github.com/user-attachments/assets/ab527bc4-720a-41f2-9499-54d6ed027163
 
-## Run locally with the rerun desktop app
+## rerun desktop app
 
-- adjust the `WANDELAPI_BASE_URL` and `NOVA_ACCESS_TOKEN` in the `.env` file to your instance URL (e.g. `https://unzhoume.instance.wandelbots.io`)
-- run `poetry install` to install the dependencies
+### Setup
+
+Adjust the `WANDELAPI_BASE_URL` and `NOVA_ACCESS_TOKEN` in the `.env` file to your instance URL (e.g. `https://unzhoume.instance.wandelbots.io`) and access token. You can find the access token in the developer portal.
+
+Run the following command to install the dependencies:
+
+```bash
+poetry install
+```
+
+### Run
+
+There are two script which can be run to feed the data to the rerun desktop app:
+
 - run `python scripts/populate.py` to start a service which periodically polls the nova instance for new planned trajectories
 - run `python scripts/stream_motion_groups.py` to start a service which streams the state of the active motion groups
 

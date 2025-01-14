@@ -94,10 +94,10 @@ class HullVisualizer:
     @staticmethod
     def compute_hull_outlines_from_geometries(child_geometries: List[Any]) -> List[np.ndarray]:
         """Compute polygon outlines from geometry child objects.
-        
+
         Args:
             child_geometries: List of geometry objects containing convex hulls
-            
+
         Returns:
             List of closed polygons as Nx3 numpy arrays
         """
@@ -115,16 +115,16 @@ class HullVisualizer:
     @staticmethod
     def compute_hull_outlines_from_points(points: List[List[float]]) -> List[np.ndarray]:
         """Compute polygon outlines directly from point coordinates.
-        
+
         Args:
             points: List of [x,y,z] coordinates
-            
+
         Returns:
             List of closed polygons as Nx3 numpy arrays
         """
         if len(points) < 4:
             return []
-            
+
         return HullVisualizer._compute_hull_from_points(np.array(points))
 
     @staticmethod
