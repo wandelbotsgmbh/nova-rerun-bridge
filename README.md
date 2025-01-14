@@ -1,8 +1,8 @@
 # nova rerun bridge
 
-Showcases [rerun.io](https://rerun.io) integration into nova.
+Visualizes the state of your nova instance inside of [rerun.io](https://rerun.io). This is intendet to be used alongside the [nova python lib](https://github.com/wandelbotsgmbh/wandelbots-nova). You will need a running nova instance. Register on [wandelbots.com](https://www.wandelbots.com/) to get access. 
 
-It visualizes:
+The visualization supports:
 
 - robot
 - trajectory
