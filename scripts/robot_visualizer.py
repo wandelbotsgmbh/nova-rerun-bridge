@@ -1,57 +1,175 @@
 import re
+from typing import List
 import numpy as np
 import rerun as rr
 import trimesh
 from scipy.spatial.transform import Rotation
-from typing import List
+from wandelbots_api_client.models import PlannerPose, Quaternion, Vector3d
+from dh_robot import DHRobot
+import wandelbots_api_client as wb
 
 
-class RealRobotVisualizer:
+class RobotVisualizer:
     def __init__(
         self,
-        glb_path: str,
-        root_path: str = "robot",
-        position_scale: float = 1000.0,
-        mesh_scale: float = 1000.0,
-        axis_length: float = 100.0,
+        robot: DHRobot,
+        robot_model_geometries,
+        tcp_geometries,
+        static_transform: bool = True,
+        base_entity_path: str = "robot",
+        albedo_factor: list = [255, 255, 255],
+        glb_path: str = "",
     ):
-        self.scene = trimesh.load(glb_path, file_type="glb")
-        self.root_path = root_path
-        self.edge_data = self.scene.graph.transforms.edge_data
-        self.position_scale = position_scale
-        self.mesh_scale = mesh_scale
+        """
+        :param robot: DHRobot instance
+        :param robot_model_geometries: List of geometries for each link
+        :param tcp_geometries: TCP geometries (similar structure to link geometries)
+        :param static_transform: If True, transforms are logged as static, else temporal.
+        :param base_entity_path: A base path prefix for logging the entities (e.g. motion group name)
+        :param albedo_factor: A list representing the RGB values [R, G, B] to apply as the albedo factor.
+        :param glb_path: Path to the GLB file for the robot model.
+        """
+        self.robot = robot
+        self.link_geometries = {}
+        self.tcp_geometries = tcp_geometries
         self.logged_meshes = set()
-        self.axis_length = axis_length
-        self.albedo_factor = [1.0, 1.0, 1.0, 1.0]
-
+        self.static_transform = static_transform
+        self.base_entity_path = base_entity_path.rstrip("/")
+        self.albedo_factor = albedo_factor
+        self.mesh_loaded = False      
+        
         # This will hold the names of discovered joints (e.g. ["robot_J00", "robot_J01", ...])
         self.joint_names: List[str] = []
+        self.layer_nodes_dict = {} 
+        self.parent_nodes_dict = {}  
 
-        # Build & log once
-        self.build_and_log()
+        # load mesh
+        try:
+            self.scene = trimesh.load(glb_path, file_type="glb")
+            self.mesh_loaded = True
+            self.edge_data = self.scene.graph.transforms.edge_data
 
-        # After loading, auto-discover any child nodes that match *_J0n
-        self.discover_joints()
+            # After loading, auto-discover any child nodes that match *_J0n
+            self.discover_joints()
+        except Exception as e:
+            print(f"Failed to load mesh: {e}")
+            self.scene = None
+            
+
+        # Group geometries by link
+        for gm in robot_model_geometries:
+            self.link_geometries.setdefault(gm.link_index, []).append(gm.geometry)
+    
 
     def discover_joints(self):
         """
-        Find all child node names that contain '_J0' followed by digits.
-        We store them in a sorted list so that e.g. J00 < J01 < J02.
+        Find all child node names that contain '_J0' followed by digits or '_FLG'.
+        Store joints with their parent nodes and print layer information.
         """
-        pattern = re.compile(r"_J0(\d+)")
+        joint_pattern = re.compile(r"_J0(\d+)")
+        flg_pattern = re.compile(r"_FLG")
         matches = []
-
+        flg_nodes = []
+        joint_parents = {}  # Store parent for each joint/FLG
+    
         for (parent, child), data in self.edge_data.items():
-            # If child's name matches e.g. 'whatever_J05'
-            match = pattern.search(child)
-            if match:
-                j_idx = int(match.group(1))
+            # Check for joints
+            joint_match = joint_pattern.search(child)
+            if joint_match:
+                j_idx = int(joint_match.group(1))
                 matches.append((j_idx, child))
-
+                joint_parents[child] = parent
+            
+            # Check for FLG
+            flg_match = flg_pattern.search(child)
+            if flg_match:
+                flg_nodes.append(child)
+                joint_parents[child] = parent
+    
         matches.sort(key=lambda x: x[0])
-        self.joint_names = [name for _, name in matches]
-        print("Discovered joints:", self.joint_names)
+        self.joint_names = [name for _, name in matches] + flg_nodes
+        print("Discovered nodes:", self.joint_names)
+        
+        # Print layer information for each joint
+        for joint in self.joint_names:
+            same_layer_nodes = self.get_nodes_on_same_layer(joint_parents[joint], joint)
+            print(f"\nNodes on same layer as {joint}:")
+            print(f"Parent node: {joint_parents[joint]}")
+            print(f"Layer nodes: {same_layer_nodes}")
+    
+    def get_nodes_on_same_layer(self, parent_node, joint):
+        """
+        Find nodes on same layer and only add descendants of link nodes.
+        """
+        same_layer = []
+        # First get immediate layer nodes
+        for (parent, child), data in self.edge_data.items():
+            if parent == parent_node:
+                if child == joint:
+                    continue
+                if 'geometry' in data:
+                    same_layer.append(data['geometry'])
+                    self.parent_nodes_dict[data['geometry']] = child
+                
+                # Get all descendants for this link
+                parentChild = child
+                stack = [child]
+                while stack:
+                    current = stack.pop()
+                    for (p, c), data in self.edge_data.items():
+                        if p == current:
+                            if 'geometry' in data:
+                                same_layer.append(data['geometry'])
+                                self.parent_nodes_dict[data['geometry']] = parentChild
+                            stack.append(c)
+        
+        self.layer_nodes_dict[joint] = same_layer
+        return same_layer
 
+    def geometry_pose_to_matrix(self, init_pose):
+        # Convert init_pose to PlannerPose and then to a matrix via the robot
+        p = PlannerPose(
+            position=Vector3d(
+                x=init_pose.position.x, y=init_pose.position.y, z=init_pose.position.z
+            ),
+            orientation=Quaternion(
+                x=init_pose.orientation.x,
+                y=init_pose.orientation.y,
+                z=init_pose.orientation.z,
+                w=init_pose.orientation.w,
+            ),
+        )
+        return self.robot.pose_to_matrix(p)
+
+    def compute_forward_kinematics(self, joint_values):
+        """Compute link transforms using the robot's methods."""
+        accumulated = self.robot.pose_to_matrix(self.robot.mounting)
+        transforms = [accumulated.copy()]
+        for dh_param, joint_rot in zip(self.robot.dh_parameters, joint_values.joints):
+            transform = self.robot.dh_transform(dh_param, joint_rot)
+            accumulated = accumulated @ transform
+            transforms.append(accumulated.copy())
+        return transforms
+
+    def rotation_matrix_to_axis_angle(self, Rm):
+        """Use scipy for cleaner axis-angle extraction."""
+        rot = Rotation.from_matrix(Rm)
+        angle = rot.magnitude()
+        axis = rot.as_rotvec() / angle if angle > 1e-8 else np.array([1.0, 0.0, 0.0])
+        return axis, angle
+    
+    def gamma_lift_single_color(self, color: np.ndarray, gamma: float = 0.8) -> np.ndarray:
+        """
+        Apply gamma correction to a single RGBA color in-place.
+        color: shape (4,) with [R, G, B, A] in 0..255, dtype=uint8
+        gamma: < 1.0 brightens midtones, > 1.0 darkens them.
+        """
+        rgb_float = color[:3].astype(np.float32) / 255.0
+        rgb_float = np.power(rgb_float, gamma)
+        color[:3] = (rgb_float * 255.0).astype(np.uint8)
+
+        return color
+    
     def get_transform_matrix(self):
         """
         Creates a transformation matrix that converts from glTF's right-handed Y-up 
@@ -68,242 +186,222 @@ class RealRobotVisualizer:
             [0.0, 0.0, 0.0, 1.0]   # Homogeneous coordinate
         ])
 
-    def matrix_to_axis_angle(self, rotation_matrix: np.ndarray):
-        rotation = Rotation.from_matrix(rotation_matrix)
-        axis_angle = rotation.as_rotvec()
-        angle = np.linalg.norm(axis_angle)
-        if angle < 1e-10:
-            return np.array([1.0, 0.0, 0.0]), 0.0
-        axis = axis_angle / angle
-        return axis, angle
+    def init_mesh(self, entity_path: str, geom, joint_name):
+        """Generic method to log a single geometry, either capsule or box."""
 
-    def transform_matrix_for_transforms(self, matrix: np.ndarray):
-        transform = matrix.copy()
-        transform[:3, 3] *= self.position_scale
-        return transform
+        if entity_path not in self.logged_meshes:
 
-    def transform_matrix_for_meshes(self, matrix: np.ndarray):
-        transform = matrix
-        mesh_scale_matrix = np.eye(4)
-        mesh_scale_matrix[:3, :3] *= self.mesh_scale
-        transform = transform @ mesh_scale_matrix
-        return transform
-
-    def gamma_lift_single_color(self, color: np.ndarray, gamma: float = 0.8) -> np.ndarray:
-        """
-        Apply gamma correction to a single RGBA color in-place.
-        color: shape (4,) with [R, G, B, A] in 0..255, dtype=uint8
-        gamma: < 1.0 brightens midtones, > 1.0 darkens them.
-        """
-        rgb_float = color[:3].astype(np.float32) / 255.0
-        rgb_float = np.power(rgb_float, gamma)
-        color[:3] = (rgb_float * 255.0).astype(np.uint8)
-
-        return color
-    
-    def get_mesh_pivot(self, mesh):
-        """Get the pivot point of a mesh that was exported from Blender."""
-        # Get transform if available in scene graph
-        node_name = mesh.metadata.get("node")
-        if node_name in self.scene.graph:
-            # Get world transform for this node
-            world_transform = self.scene.graph[node_name][0]
-            # Extract translation component (last column of 4x4 matrix)
-            pivot = world_transform[:3, 3]
-            return pivot
+            if geom.metadata.get('node') not in self.parent_nodes_dict:
+                return
             
-        # Fallback to bounds center if no transform found
-        return mesh.bounds_center
-    
-    def log_geometry(self, entity_path: str, node_name: str, parent_name: str):
-        dumped = self.scene.dump()
-        for geom in dumped:
-            if geom.metadata.get("node") == node_name:
-                
-                # Get the transform from the node to the parent
-                cumulative_transform, _ = self.scene.graph.get(frame_to=node_name)
-                
-                inverse_transform = np.linalg.inv(cumulative_transform)
+            base_transform = np.eye(4)
+            # if the dh parameters are not at 0,0,0 from the mesh we have to move the first mesh joint
+            if 'J00' in joint_name:
+                base_transform_, _ = self.scene.graph.get(frame_to=joint_name)
+                base_transform = base_transform_.copy()
+            base_transform[:3, 3] *= 1000
+            
+            # if the mesh has the pivot not in the center, we need to adjust the transform
+            cumulative_transform, _ = self.scene.graph.get(frame_to=self.parent_nodes_dict[geom.metadata.get('node')])
+            ctransform = cumulative_transform.copy()
 
+            # scale positions to mm
+            ctransform[:3, 3] *= 1000
 
-                transform = inverse_transform
-                mesh_scale_matrix = np.eye(4)
-                mesh_scale_matrix[:3, :3] *= self.mesh_scale
-                transform = transform @ mesh_scale_matrix
+            # scale mesh to mm            
+            transform = base_transform @ ctransform
+            mesh_scale_matrix = np.eye(4)
+            mesh_scale_matrix[:3, :3] *= 1000
+            transform = transform @ mesh_scale_matrix
+            transformed_mesh = geom.copy()
 
-                parent_to_child = self.edge_data.get((parent_name, node_name), {}).get("matrix", np.eye(4))
-                transformed_mesh = geom.copy()
-                pivot = self.get_mesh_pivot(geom) * 1000
+            transformed_mesh.apply_transform(transform)
 
-                transformed_mesh.apply_transform(transform)
+            if transformed_mesh.visual is not None:
+                transformed_mesh.visual = transformed_mesh.visual.to_color()
 
-                if transformed_mesh.visual is not None:
-                    transformed_mesh.visual = transformed_mesh.visual.to_color()
+            vertex_colors = None
+            if transformed_mesh.visual and hasattr(transformed_mesh.visual, "vertex_colors"):
+                vertex_colors = transformed_mesh.visual.vertex_colors 
+            
+            rr.log(
+                entity_path,
+                rr.Mesh3D(
+                    vertex_positions=transformed_mesh.vertices,
+                    triangle_indices=transformed_mesh.faces,
+                    vertex_normals=getattr(transformed_mesh, "vertex_normals", None),
+                    albedo_factor=self.gamma_lift_single_color(vertex_colors, gamma=0.5),
+                ),
+            )
 
-                vertex_colors = None
-                if transformed_mesh.visual and hasattr(transformed_mesh.visual, "vertex_colors"):
-                    vertex_colors = transformed_mesh.visual.vertex_colors 
-                
+            self.logged_meshes.add(entity_path)
+
+    def init_geometry(self, entity_path: str, capsule, link_index):
+        """Generic method to log a single geometry, either capsule or box."""
+
+        if entity_path not in self.logged_meshes:
+            if capsule:
+                radius = capsule.radius
+                height = capsule.cylinder_height
+
+                # Slightly shrink the capsule if static to reduce z-fighting
+                if self.static_transform:
+                    radius *= 0.99
+                    height *= 0.99
+
+                # Create capsule and retrieve normals
+                cap_mesh = trimesh.creation.capsule(radius=radius, height=height)
+                vertex_normals = cap_mesh.vertex_normals.tolist()
+
                 rr.log(
                     entity_path,
                     rr.Mesh3D(
-                        vertex_positions=transformed_mesh.vertices - pivot,
-                        triangle_indices=transformed_mesh.faces,
-                        vertex_normals=getattr(transformed_mesh, "vertex_normals", None),
-                        albedo_factor=self.gamma_lift_single_color(vertex_colors, gamma=0.5),
+                        vertex_positions=cap_mesh.vertices.tolist(),
+                        triangle_indices=cap_mesh.faces.tolist(),
+                        vertex_normals=vertex_normals,
+                        albedo_factor=self.albedo_factor,
                     ),
                 )
                 self.logged_meshes.add(entity_path)
-                    
+            else:
+                # fallback to a box
+                rr.log(entity_path, rr.Boxes3D(half_sizes=[[50, 50, 50]]))
+                self.logged_meshes.add(entity_path)
 
-    def build_hierarchy(self, parent_node: str, parent_path: str = ""):
-        for (parent, child), data in self.edge_data.items():
-            if parent == parent_node:
-                transform = data["matrix"]
-                transformed_matrix = self.transform_matrix_for_transforms(transform)
+    def log_robot_geometry(self, joint_position):
+        transforms = self.compute_forward_kinematics(joint_position)
 
-                translation = transformed_matrix[:3, 3]
-                rotation_matrix = transformed_matrix[:3, :3]
-                entity_path = f"{parent_path}/{child}" if parent_path else child
-                    
-                axis, angle = self.matrix_to_axis_angle(rotation_matrix)
-                rr.log(
-                    f"{self.root_path}/{entity_path}",
-                    rr.Transform3D(
-                        translation=translation,
-                        rotation=rr.RotationAxisAngle(axis=axis, angle=angle),
-                        axis_length=self.axis_length,
-                        relation=rr.TransformRelation.ParentFromChild,
-                    ),
-                    static=True,
-                    timeless=True,
-                )
-
-                self.log_geometry(f"{self.root_path}/{entity_path}/mesh", child, parent)
-                self.build_hierarchy(child, entity_path)
-
-    def build_and_log(self):
-        # Adjust "world" to the actual root node name if different
-        rr.log(f"{self.root_path}", rr.ViewCoordinates.RIGHT_HAND_Y_UP, static=True, timeless=True)
-
-        # Apply the additional transformation to the root path
-        root_transform = self.get_transform_matrix()
-        rotation_matrix = root_transform[:3, :3]
-        axis, angle = self.matrix_to_axis_angle(rotation_matrix)
-        rr.log(
-            f"{self.root_path}",
-            rr.Transform3D(
-                rotation=rr.RotationAxisAngle(axis=axis, angle=angle),
-                axis_length=self.axis_length,
-            ),
-            timeless=True,
-        )
-        
-        self.build_hierarchy("world")
-
-    def update_joint_rotation(self, joint_name: str, angle: float):
-        """
-        Add `angle` (radians) to the joint's existing local rotation around Z,
-        as specified by the original glTF parent->child transform.
-        
-        Because we always read from edge_data, this function effectively does:
-            total_z_rotation = (original_z_rotation) + angle
-        on each call.
-        
-        If you want repeated calls to keep accumulating on top of the *last* call,
-        then you must store the updated transform or angles in a field
-        (e.g. self.local_transforms) rather than re-reading from edge_data each time.
-        """
-
-        # 1) Find the parent of this joint
-        parent_name = None
-        for (parent, child), _ in self.edge_data.items():
-            if child == joint_name:
-                parent_name = parent
-                break
-        if parent_name is None:
-            print(f"Joint '{joint_name}' not found in edge_data. No update.")
-            return
-
-        # 2) Get the original transform from the glTF, then convert to your Rerun coords
-        #original_matrix = self.edge_data[(parent_name, joint_name)]["matrix"]
-        original_matrix, _ = self.scene.graph.get(frame_to=joint_name, frame_from=parent_name)
-        transformed_matrix = self.transform_matrix_for_transforms(original_matrix)
-
-        # 3) Extract current rotation as Euler angles
-        R_old = transformed_matrix[:3, :3]
-        eul = Rotation.from_matrix(R_old).as_euler('zyx', degrees=False)
-        # eul = [rx, ry, rz], where eul[2] is the rotation around local Z
-
-        # 4) Add the new angle to the existing Z rotation
-        eul[1] += angle
-
-        # 5) Build the updated rotation matrix
-        R_new = Rotation.from_euler('zyx', eul, degrees=False).as_matrix()
-        transformed_matrix[:3, :3] = R_new
-
-        translation = transformed_matrix[:3, 3]
-        axis, final_angle = self.matrix_to_axis_angle(R_new)
-
-        full_path = self.get_full_entity_path(joint_name)
-
-        rr.log(
-            f"{self.root_path}/{full_path}",
-            rr.Transform3D(
-                translation=translation,
-                rotation=rr.RotationAxisAngle(axis=axis, angle=final_angle),
-                axis_length=self.axis_length,
-                relation=rr.TransformRelation.ParentFromChild,
-            ),
-            static=True,
-            timeless=True,
-        )
-        
-        """
-        print(
-            f"update_joint_rotation('{joint_name}', {angle}): "
-            f"Old Z={eul[2] - angle:.3f}, New Z={eul[2]:.3f}"
-        )
-        """
-
-
-    def update_all_joints(self, angles: List[float]):
-        """
-        Bulk-update all discovered joints by passing a list of angles
-        in numeric order: e.g. J00, then J01, then J02, ...
-        """
-        if len(angles) != len(self.joint_names):
-            raise ValueError(
-                f"Number of angles ({len(angles)}) does not match "
-                f"number of discovered joints ({len(self.joint_names)})."
+        def log_geometry(entity_path, transform):
+            translation = transform[:3, 3]
+            Rm = transform[:3, :3]
+            axis, angle = self.rotation_matrix_to_axis_angle(Rm)
+            rr.log(
+                entity_path,
+                rr.InstancePoses3D(
+                    translations=[translation.tolist()],
+                    rotation_axis_angles=[
+                        rr.RotationAxisAngle(axis=axis.tolist(), angle=float(angle))
+                    ],
+                ),
+                static=self.static_transform,
+                timeless=self.static_transform,
             )
 
-        for joint_name, angle in zip(self.joint_names, angles):
-            self.update_joint_rotation(joint_name, angle)
+        # Log robot joint geometries
+        if self.mesh_loaded:
+            for link_index, joint_name in enumerate(self.joint_names):
+                link_transform = transforms[link_index]
 
-    def get_full_entity_path(self, node_name: str) -> str:
+                # Get nodes on same layer using dictionary
+                same_layer_nodes = self.layer_nodes_dict.get(joint_name)
+                if not same_layer_nodes:
+                    continue
+                
+                filtered_geoms = []
+                for node_name in same_layer_nodes:
+                    if node_name in self.scene.geometry:
+                        geom = self.scene.geometry[node_name]
+                        # Add metadata that would normally come from dump
+                        geom.metadata = {'node': node_name}
+                        filtered_geoms.append(geom)
+
+                for geom in filtered_geoms:
+                    entity_path = f"{self.base_entity_path}/mesh/links/link_{link_index}/mesh/{geom.metadata.get('node')}"
+
+                    # calculate the inverse transform to get the mesh in the correct position
+                    cumulative_transform, _ = self.scene.graph.get(frame_to=joint_name)
+                    ctransform = cumulative_transform.copy()
+                    inverse_transform = np.linalg.inv(ctransform)
+
+                    # DH theta is rotated, rotate mesh around z in direction of theta
+                    rotation_matrix_z_4x4 = np.eye(4)
+                    if len(self.robot.dh_parameters) > link_index:
+                        print(f"theta: {self.robot.dh_parameters[link_index].theta}")
+                        rotation_z_minus_90 = Rotation.from_euler('z', self.robot.dh_parameters[link_index].theta, degrees=False).as_matrix()
+                        rotation_matrix_z_4x4[:3, :3] = rotation_z_minus_90
+                    
+                    # scale positions to mm
+                    inverse_transform[:3, 3] *= 1000
+
+                    root_transform = self.get_transform_matrix()
+                    
+                    transform = root_transform @ inverse_transform
+
+                    final_transform = link_transform @ rotation_matrix_z_4x4 @ transform
+                    
+                    self.init_mesh(entity_path, geom, joint_name)
+                    log_geometry(entity_path, final_transform)
+
+        # Log link geometries
+        for link_index, geometries in self.link_geometries.items():
+            link_transform = transforms[link_index]
+            for i, geom in enumerate(geometries):
+                entity_path = f"{self.base_entity_path}/collision/links/link_{link_index}/geometry_{i}"
+                final_transform = link_transform @ self.geometry_pose_to_matrix(geom.init_pose)
+                
+                self.init_geometry(entity_path, geom.capsule, link_index)
+                log_geometry(entity_path, final_transform)
+
+        # Log TCP geometries
+        if self.tcp_geometries:
+            tcp_transform = transforms[-1]  # the final frame transform
+            for i, geom in enumerate(self.tcp_geometries):
+                entity_path = f"{self.base_entity_path}/collision/tcp/geometry_{i}"
+                final_transform = tcp_transform @ self.geometry_pose_to_matrix(geom.init_pose)
+
+                self.init_geometry(entity_path, geom.capsule, link_index)
+                log_geometry(entity_path, final_transform)
+
+    def log_robot_geometries(self, trajectory: List[wb.models.TrajectorySample], times_column):
         """
-        Build the path from the top-level child of 'world' all the way
-        down to 'node_name', skipping 'world' itself.
-        E.g. "UNIVERSALROBOTS_UR10E_J00/UNIVERSALROBOTS_UR10E_J01/UNIVERSALROBOTS_UR10E_J02"
+        Log the robot geometries for each link and TCP as separate entities.
+
+        Args:
+            trajectory (List[wb.models.TrajectorySample]): The list of trajectory sample points.
+            times_column (rr.TimeSecondsColumn): The time column associated with the trajectory points.
         """
-        path_parts = []
-        current = node_name
+        link_positions = {}
+        link_rotations = {}
 
-        # Walk upward until we hit 'world' or can't find a parent
-        while current and current.lower() != "world":
-            path_parts.append(current)
-            # Find the parent of 'current' by looking at edge_data
-            found_parent = False
-            for (possible_parent, possible_child) in self.edge_data.keys():
-                if possible_child == current:
-                    current = possible_parent
-                    found_parent = True
-                    break
-            if not found_parent:
-                # No parent found => this is a top-level node
-                break
+        def collect_geometry_data(entity_path, transform, geom):
+            """Helper to collect geometry data for a given entity."""
+            self.init_geometry(entity_path, geom.capsule)
+            translation = transform[:3, 3].tolist()
+            Rm = transform[:3, :3]
+            axis, angle = self.rotation_matrix_to_axis_angle(Rm)
+            if entity_path not in link_positions:
+                link_positions[entity_path] = []
+                link_rotations[entity_path] = []
+            link_positions[entity_path].append(translation)
+            link_rotations[entity_path].append(rr.RotationAxisAngle(axis=axis, angle=angle))
 
-        # The path_parts list is from leaf -> root; reverse it
-        path_parts.reverse()
-        return "/".join(path_parts)
+        for point in trajectory:
+            transforms = self.compute_forward_kinematics(point.joint_position)
+
+            # Collect data for link geometries
+            for link_index, geometries in self.link_geometries.items():
+                link_transform = transforms[link_index]
+                for i, geom in enumerate(geometries):
+                    entity_path = f"{self.base_entity_path}/links/link_{link_index}/geometry_{i}"
+                    final_transform = link_transform @ self.geometry_pose_to_matrix(geom.init_pose)
+                    collect_geometry_data(entity_path, final_transform, geom)
+
+            # Collect data for TCP geometries
+            if self.tcp_geometries:
+                tcp_transform = transforms[-1]  # End-effector transform
+                for i, geom in enumerate(self.tcp_geometries):
+                    entity_path = f"{self.base_entity_path}/tcp/geometry_{i}"
+                    final_transform = tcp_transform @ self.geometry_pose_to_matrix(geom.init_pose)
+                    collect_geometry_data(entity_path, final_transform, geom)
+
+        # Send collected columns for all geometries
+        for entity_path, positions in link_positions.items():
+            rr.send_columns(
+                entity_path,
+                times=[times_column],
+                components=[
+                    rr.Transform3D.indicator(),
+                    rr.components.Translation3DBatch(positions),
+                    rr.components.RotationAxisAngleBatch(link_rotations[entity_path]),
+                ],
+            )
