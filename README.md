@@ -19,7 +19,7 @@ nova catalog install rerun
 
 to use it on your nova instance.
 
-![](doc/rerun.png)
+https://github.com/user-attachments/assets/ab527bc4-720a-41f2-9499-54d6ed027163
 
 ## Run locally with the rerun desktop app
 
