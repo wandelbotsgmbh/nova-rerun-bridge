@@ -4,7 +4,7 @@ import rerun as rr
 import asyncio
 import trimesh
 import wandelbots_api_client as wb
-from scripts.robot_visualizer import RobotVisualizer
+from robot_visualizer import RobotVisualizer
 from hull_visualizer import HullVisualizer
 from utils import get_api_client
 from dh_robot import DHRobot
@@ -585,6 +585,7 @@ def process_trajectory(
 
 async def fetch_and_process_motion(
     motion_id,
+    model_from_controller,
     optimizer_config: wb.models.OptimizerSetup,
     trajectory: List[wb.models.TrajectorySample],
 ):
@@ -600,6 +601,7 @@ async def fetch_and_process_motion(
         tcp_geometries=optimizer_config.safety_setup.tcp_geometries,
         static_transform=False,
         base_entity_path="motion",
+        glb_path=f"models/{model_from_controller}.glb",
     )
 
     print(f"Processing motion trajectory for {motion_id}.", flush=True)
@@ -684,8 +686,11 @@ async def process_motions():
                 if motion_id in processed_motion_ids:
                     continue
 
+                motion_motion_group = next((mg for mg in motion_groups.instances if mg.motion_group == motion.motion_group), None)
+
                 await fetch_and_process_motion(
                     motion_id=motion_id,
+                    model_from_controller=motion_motion_group.model_from_controller,
                     optimizer_config=optimizer_config,
                     trajectory=trajectory.trajectory,
                 )

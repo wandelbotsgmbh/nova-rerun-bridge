@@ -316,7 +316,6 @@ class RobotVisualizer:
                     # DH theta is rotated, rotate mesh around z in direction of theta
                     rotation_matrix_z_4x4 = np.eye(4)
                     if len(self.robot.dh_parameters) > link_index:
-                        print(f"theta: {self.robot.dh_parameters[link_index].theta}")
                         rotation_z_minus_90 = Rotation.from_euler('z', self.robot.dh_parameters[link_index].theta, degrees=False).as_matrix()
                         rotation_matrix_z_4x4[:3, :3] = rotation_z_minus_90
                     
@@ -363,9 +362,8 @@ class RobotVisualizer:
         link_positions = {}
         link_rotations = {}
 
-        def collect_geometry_data(entity_path, transform, geom):
+        def collect_geometry_data(entity_path, transform):
             """Helper to collect geometry data for a given entity."""
-            self.init_geometry(entity_path, geom.capsule)
             translation = transform[:3, 3].tolist()
             Rm = transform[:3, :3]
             axis, angle = self.rotation_matrix_to_axis_angle(Rm)
@@ -378,21 +376,68 @@ class RobotVisualizer:
         for point in trajectory:
             transforms = self.compute_forward_kinematics(point.joint_position)
 
+            # Log robot joint geometries
+            if self.mesh_loaded:
+                for link_index, joint_name in enumerate(self.joint_names):
+                    link_transform = transforms[link_index]
+
+                    # Get nodes on same layer using dictionary
+                    same_layer_nodes = self.layer_nodes_dict.get(joint_name)
+                    if not same_layer_nodes:
+                        continue
+                    
+                    filtered_geoms = []
+                    for node_name in same_layer_nodes:
+                        if node_name in self.scene.geometry:
+                            geom = self.scene.geometry[node_name]
+                            # Add metadata that would normally come from dump
+                            geom.metadata = {'node': node_name}
+                            filtered_geoms.append(geom)
+
+                    for geom in filtered_geoms:
+                        entity_path = f"{self.base_entity_path}/mesh/links/link_{link_index}/mesh/{geom.metadata.get('node')}"
+
+                        # calculate the inverse transform to get the mesh in the correct position
+                        cumulative_transform, _ = self.scene.graph.get(frame_to=joint_name)
+                        ctransform = cumulative_transform.copy()
+                        inverse_transform = np.linalg.inv(ctransform)
+
+                        # DH theta is rotated, rotate mesh around z in direction of theta
+                        rotation_matrix_z_4x4 = np.eye(4)
+                        if len(self.robot.dh_parameters) > link_index:
+                            print(f"theta: {self.robot.dh_parameters[link_index].theta}")
+                            rotation_z_minus_90 = Rotation.from_euler('z', self.robot.dh_parameters[link_index].theta, degrees=False).as_matrix()
+                            rotation_matrix_z_4x4[:3, :3] = rotation_z_minus_90
+                        
+                        # scale positions to mm
+                        inverse_transform[:3, 3] *= 1000
+
+                        root_transform = self.get_transform_matrix()
+                        
+                        transform = root_transform @ inverse_transform
+
+                        final_transform = link_transform @ rotation_matrix_z_4x4 @ transform
+                        
+                        self.init_mesh(entity_path, geom, joint_name)
+                        collect_geometry_data(entity_path, final_transform)
+
             # Collect data for link geometries
             for link_index, geometries in self.link_geometries.items():
                 link_transform = transforms[link_index]
                 for i, geom in enumerate(geometries):
-                    entity_path = f"{self.base_entity_path}/links/link_{link_index}/geometry_{i}"
+                    entity_path = f"{self.base_entity_path}/collision/links/link_{link_index}/geometry_{i}"
                     final_transform = link_transform @ self.geometry_pose_to_matrix(geom.init_pose)
-                    collect_geometry_data(entity_path, final_transform, geom)
+                    self.init_geometry(entity_path, geom.capsule)
+                    collect_geometry_data(entity_path, final_transform)
 
             # Collect data for TCP geometries
             if self.tcp_geometries:
                 tcp_transform = transforms[-1]  # End-effector transform
                 for i, geom in enumerate(self.tcp_geometries):
-                    entity_path = f"{self.base_entity_path}/tcp/geometry_{i}"
+                    entity_path = f"{self.base_entity_path}/collision/tcp/geometry_{i}"
                     final_transform = tcp_transform @ self.geometry_pose_to_matrix(geom.init_pose)
-                    collect_geometry_data(entity_path, final_transform, geom)
+                    self.init_geometry(entity_path, geom.capsule)
+                    collect_geometry_data(entity_path, final_transform)
 
         # Send collected columns for all geometries
         for entity_path, positions in link_positions.items():
