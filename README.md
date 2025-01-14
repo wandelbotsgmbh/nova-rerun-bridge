@@ -1,7 +1,15 @@
 # nova rerun bridge
 
 Showcases [rerun.io](https://rerun.io) integration into nova.
-It visualizes the current state of the motion groups, safety zones, collision objects and planned trajectories.
+
+It visualizes:
+
+- robot
+- trajectory
+- dh parameters of robot
+- collision model of robot
+- safety zones of the robot controller
+- collision objects defined in the collision store
 
 Install the app with the nova cli tool by running:
 
