@@ -4,8 +4,8 @@ import numpy as np
 import rerun as rr
 import trimesh
 from scipy.spatial.transform import Rotation
-from dh_robot import DHRobot
 from nova.api import models
+from nova_rerun_bridge.dh_robot import DHRobot
 
 class RobotVisualizer:
     def __init__(

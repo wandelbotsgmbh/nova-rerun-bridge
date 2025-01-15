@@ -2,11 +2,12 @@ from nova import Nova
 import numpy as np
 import rerun as rr
 import asyncio
-from hull_visualizer import HullVisualizer
-from robot_visualizer import RobotVisualizer
 
-from dh_robot import DHRobot
 from scipy.spatial.transform import Rotation as R
+
+from nova_rerun_bridge.dh_robot import DHRobot
+from nova_rerun_bridge.hull_visualizer import HullVisualizer
+from nova_rerun_bridge.robot_visualizer import RobotVisualizer
 
 # Constants
 RECORDING_INTERVAL = 0.016  # 16ms per point
