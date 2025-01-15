@@ -2,7 +2,6 @@ from typing import Any, List
 import numpy as np
 from scipy.spatial import ConvexHull
 
-
 class HullVisualizer:
     @staticmethod
     def plane_from_triangle(p0, p1, p2, normal_epsilon=1e-6):

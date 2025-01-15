@@ -61,6 +61,28 @@ poetry run ruff check scripts/. --fix
 poetry run ruff format
 ```
 
+### Build
+
+To build the package locally, run the following command
+
+```bash
+poetry build
+```
+
+This will create a dist/ directory with the built package (.tar.gz and .whl files).
+
+#### Installation
+
+```bash
+pip install wandelbots
+```
+
+#### Install a development branch in Poetry
+
+```
+nova-rerun-bridge = { git = "https://github.com/wandelbotsgmbh/nova-rerun-bridge.git", branch = "feature/branchname" }
+```
+
 ## Issues
 
 - rerun is able to run behind reverse proxy and the viewer can connect via web

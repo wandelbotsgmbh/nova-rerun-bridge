@@ -4,10 +4,8 @@ import numpy as np
 import rerun as rr
 import trimesh
 from scipy.spatial.transform import Rotation
-from wandelbots_api_client.models import PlannerPose, Quaternion, Vector3d
 from dh_robot import DHRobot
-import wandelbots_api_client as wb
-
+from nova.api import models
 
 class RobotVisualizer:
     def __init__(
@@ -126,11 +124,11 @@ class RobotVisualizer:
 
     def geometry_pose_to_matrix(self, init_pose):
         # Convert init_pose to PlannerPose and then to a matrix via the robot
-        p = PlannerPose(
-            position=Vector3d(
+        p = models.PlannerPose(
+            position=models.Vector3d(
                 x=init_pose.position.x, y=init_pose.position.y, z=init_pose.position.z
             ),
-            orientation=Quaternion(
+            orientation=models.Quaternion(
                 x=init_pose.orientation.x,
                 y=init_pose.orientation.y,
                 z=init_pose.orientation.z,
@@ -356,7 +354,7 @@ class RobotVisualizer:
                 self.init_geometry(entity_path, geom.capsule)
                 log_geometry(entity_path, final_transform)
 
-    def log_robot_geometries(self, trajectory: List[wb.models.TrajectorySample], times_column):
+    def log_robot_geometries(self, trajectory: List[models.TrajectorySample], times_column):
         """
         Log the robot geometries for each link and TCP as separate entities.
 

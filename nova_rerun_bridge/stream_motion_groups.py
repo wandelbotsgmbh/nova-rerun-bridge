@@ -2,10 +2,8 @@ from nova import Nova
 import numpy as np
 import rerun as rr
 import asyncio
-import wandelbots_api_client as wb
 from hull_visualizer import HullVisualizer
 from robot_visualizer import RobotVisualizer
-from decouple import config
 
 from dh_robot import DHRobot
 from scipy.spatial.transform import Rotation as R
