@@ -1,25 +1,18 @@
+from nova import Nova
 import numpy as np
 import rerun as rr
 import asyncio
 import wandelbots_api_client as wb
 from hull_visualizer import HullVisualizer
 from robot_visualizer import RobotVisualizer
+from decouple import config
 
-from utils import get_api_client
 from dh_robot import DHRobot
 from scipy.spatial.transform import Rotation as R
 
 # Constants
 RECORDING_INTERVAL = 0.016  # 16ms per point
 TIME_INTERVAL_NAME = f"time_interval_{RECORDING_INTERVAL}"
-
-
-async def fetch_optimizer_config(
-    motion_group_infos_api: wb.api.MotionGroupInfosApi, cell_id: str, motion_group: str
-):
-    """Fetch the optimizer configuration for a given motion group."""
-    return await motion_group_infos_api.get_optimizer_configuration(cell_id, motion_group)
-
 
 def log_safety_zones_once(motion_group: str, optimizer_config, robot: DHRobot):
     """
@@ -134,9 +127,9 @@ async def process_motion_group_state():
     """Process motion group states and log data efficiently."""
     print("Starting motion group state processing...", flush=True)
 
-    client = get_api_client()
-    motion_group_infos_api = wb.api.MotionGroupInfosApi(api_client=client)
-    motion_group_api = wb.api.MotionGroupApi(api_client=client)
+    nova = Nova()
+    motion_group_infos_api = nova._api_client.motion_group_infos_api
+    motion_group_api = nova._api_client.motion_group_api
     processor = MotionGroupProcessor()
 
     rr.init(application_id="nova", recording_id="nova_live", spawn=True)
@@ -149,9 +142,7 @@ async def process_motion_group_state():
 
     for active_motion_group in motion_groups.instances:
         motion_group = active_motion_group.motion_group
-        optimizer_config = await fetch_optimizer_config(
-            motion_group_infos_api, "cell", motion_group
-        )
+        optimizer_config = await motion_group_infos_api.get_optimizer_configuration("cell", motion_group)
 
         # Initialize DHRobot and Visualizer
         robot = DHRobot(optimizer_config.dh_parameters, optimizer_config.mounting)
@@ -181,7 +172,7 @@ async def process_motion_group_state():
 
             await asyncio.sleep(0.01)  # Prevents CPU overuse
 
-    await client.close()
+    await nova._api_client.close()
 
 
 if __name__ == "__main__":

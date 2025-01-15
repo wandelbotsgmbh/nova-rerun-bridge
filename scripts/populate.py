@@ -1,12 +1,12 @@
 from typing import Dict, List
+from nova import Nova
 import numpy as np
 import rerun as rr
 import asyncio
 import trimesh
-import wandelbots_api_client as wb
 from robot_visualizer import RobotVisualizer
 from hull_visualizer import HullVisualizer
-from utils import get_api_client
+from nova.api import models
 from dh_robot import DHRobot
 from motion_storage import load_processed_motions, save_processed_motion
 from scipy.spatial.transform import Rotation as R
@@ -256,9 +256,9 @@ def configure_logging_blueprints(motion_group_list: list):
 
 
 def log_joint_data(
-    trajectory: List[wb.models.TrajectorySample],
+    trajectory: List[models.TrajectorySample],
     times_column,
-    optimizer_config: wb.models.OptimizerSetup,
+    optimizer_config: models.OptimizerSetup,
 ) -> None:
     """
     Log joint-related data (position, velocity, acceleration, torques) from a trajectory as columns.
@@ -323,7 +323,7 @@ def log_joint_data(
                 )
 
 
-def log_tcp_pose(trajectory: List[wb.models.TrajectorySample], times_column):
+def log_tcp_pose(trajectory: List[models.TrajectorySample], times_column):
     """
     Log TCP pose (position + orientation) data.
     """
@@ -360,9 +360,9 @@ def log_tcp_pose(trajectory: List[wb.models.TrajectorySample], times_column):
 
 
 def log_scalar_values(
-    trajectory: List[wb.models.TrajectorySample],
+    trajectory: List[models.TrajectorySample],
     times_column,
-    optimizer_config: wb.models.OptimizerSetup,
+    optimizer_config: models.OptimizerSetup,
 ):
     """
     Log scalar values such as TCP velocity, acceleration, orientation velocity/acceleration, time, and location.
@@ -436,22 +436,22 @@ def log_scalar_values(
             )
 
 
-def log_colliders_once(colliders: Dict[str, wb.models.Collider]):
+def log_colliders_once(colliders: Dict[str, models.Collider]):
     for collider_id, collider in colliders.items():
         # Default components
-        default_position = wb.models.Vector3d(x=0.0, y=0.0, z=0.0)
-        default_orientation = wb.models.Vector3d(x=0.0, y=0.0, z=0.0)
+        default_position = models.Vector3d(x=0.0, y=0.0, z=0.0)
+        default_orientation = models.Vector3d(x=0.0, y=0.0, z=0.0)
 
         # Check pose and its components
         pose = (
             collider.pose
             if collider.pose is not None
-            else wb.models.Pose(position=default_position, orientation=default_orientation)
+            else models.Pose(position=default_position, orientation=default_orientation)
         )
 
         # Handle position - convert list to Vector3d if needed
         if isinstance(pose.position, list):
-            position = wb.models.Vector3d(
+            position = models.Vector3d(
                 x=float(pose.position[0]), y=float(pose.position[1]), z=float(pose.position[2])
             )
         else:
@@ -463,7 +463,7 @@ def log_colliders_once(colliders: Dict[str, wb.models.Collider]):
 
         # Handle orientation - convert list to Vector3d if needed
         if isinstance(pose.orientation, list):
-            orientation = wb.models.Vector3d(
+            orientation = models.Vector3d(
                 x=float(pose.orientation[0]),
                 y=float(pose.orientation[1]),
                 z=float(pose.orientation[2]),
@@ -475,7 +475,7 @@ def log_colliders_once(colliders: Dict[str, wb.models.Collider]):
                 else default_orientation
             )
 
-        pose = wb.models.Pose(position=position, orientation=orientation)
+        pose = models.Pose(position=position, orientation=orientation)
 
         # rotation_vector = [pose.orientation.x, pose.orientation.y, pose.orientation.z]
         # rotation = R.from_rotvec(rotation_vector)
@@ -569,8 +569,8 @@ def log_colliders_once(colliders: Dict[str, wb.models.Collider]):
 def process_trajectory(
     robot: DHRobot,
     visualizer: RobotVisualizer,
-    trajectory: List[wb.models.TrajectorySample],
-    optimizer_config: wb.models.OptimizerSetup,
+    trajectory: List[models.TrajectorySample],
+    optimizer_config: models.OptimizerSetup,
     timer_offset: float,
 ):
     """
@@ -612,8 +612,8 @@ def process_trajectory(
 async def fetch_and_process_motion(
     motion_id,
     model_from_controller,
-    optimizer_config: wb.models.OptimizerSetup,
-    trajectory: List[wb.models.TrajectorySample],
+    optimizer_config: models.OptimizerSetup,
+    trajectory: List[models.TrajectorySample],
 ):
     """
     Fetch and process a single motion if not processed already.
@@ -666,11 +666,11 @@ async def process_motions():
     global first_run
     global previous_motion_group_list
 
-    client = get_api_client()
-    motion_api = wb.api.MotionApi(api_client=client)
-    motion_group_infos_api = wb.api.MotionGroupInfosApi(api_client=client)
-    motion_group_api = wb.api.MotionGroupApi(api_client=client)
-    store_collision_api = wb.api.StoreCollisionComponentsApi(api_client=client)
+    nova = Nova()
+    motion_group_infos_api = nova._api_client.motion_group_infos_api
+    motion_api = nova._api_client.motion_api
+    motion_group_api = nova._api_client.motion_group_api
+    store_collision_api = nova._api_client.store_collision_components_api
 
     try:
         motions = await motion_api.list_motions("cell")
@@ -688,7 +688,11 @@ async def process_motions():
             time_offset = sum(m[1] for m in processed_motions)
             rr.set_time_seconds(TIME_INTERVAL_NAME, time_offset)
 
-            for motion_id in motions.motions:
+            # Filter out already processed motions
+            new_motions = [motion_id for motion_id in motions.motions if motion_id not in processed_motion_ids]
+
+            for motion_id in new_motions:                
+                print(f"Processing motion {motion_id}.", flush=True)
                 colliders = await store_collision_api.list_stored_colliders("cell")
                 log_colliders_once(colliders)
 
@@ -734,8 +738,7 @@ async def process_motions():
         print(f"Error during job execution: {e}", flush=True)
     finally:
         job_running = False
-        await client.close()
-
+        await nova._api_client.close()
 
 async def main():
     """Main entry point for the application."""

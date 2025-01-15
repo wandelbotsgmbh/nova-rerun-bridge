@@ -10,7 +10,7 @@ include = ["rerun_nova"]
 [tool.poetry.dependencies]
 python = ">=3.11,<3.12"
 rerun-sdk = "^0.21.0"
-wandelbots-api-client = "^24.8.1"
+wandelbots-nova = { git = "https://github.com/wandelbotsgmbh/wandelbots-nova.git", branch = "feature/expose-store-collision-components-api" }
 python-decouple = "^3.8"
 requests = "^2.32.3"
 APScheduler = "^3.11.0"
