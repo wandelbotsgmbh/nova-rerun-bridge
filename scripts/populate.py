@@ -141,12 +141,12 @@ def configure_tcp_line_colors():
         ("tcp_orientation_acceleration", [136, 58, 255], 2),
         ("time", [136, 58, 255], 2),
         ("location_on_trajectory", [136, 58, 255], 2),
-        ("tcp_acceleration_lower_limit", [255, 0, 0], 4),
-        ("tcp_acceleration_upper_limit", [255, 0, 0], 4),
-        ("tcp_orientation_acceleration_lower_limit", [255, 0, 0], 4),
-        ("tcp_orientation_acceleration_upper_limit", [255, 0, 0], 4),
-        ("tcp_velocity_limit", [255, 0, 0], 4),
-        ("tcp_orientation_velocity_limit", [255, 0, 0], 4),
+        ("tcp_acceleration_lower_limit", [176, 49, 40], 4),
+        ("tcp_acceleration_upper_limit", [176, 49, 40], 4),
+        ("tcp_orientation_acceleration_lower_limit", [176, 49, 40], 4),
+        ("tcp_orientation_acceleration_upper_limit", [176, 49, 40], 4),
+        ("tcp_velocity_limit", [176, 49, 40], 4),
+        ("tcp_orientation_velocity_limit", [176, 49, 40], 4),
     ]
     for name, color, width in series_specs:
         rr.log(f"motion/{name}", rr.SeriesLine(color=color, name=name, width=width), timeless=True)
