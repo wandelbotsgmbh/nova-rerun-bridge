@@ -30,44 +30,102 @@ def configure_joint_line_colors():
     """
     Log the visualization lines for joint limit boundaries.
     """
+    colors = [[245, 243, 254], 
+              [236, 234, 253], 
+              [220, 215, 251], 
+              [194, 183, 248], 
+              [157, 131, 246], 
+              [142,  86, 251],
+              [136,  58, 255],
+              [116,  39, 222],
+              [ 94,  19, 185],
+              [ 75,   0, 153],
+              [ 49,   0,   1]]
+
     for i in range(1, 7):
         prefix = "motion/joint"
+        color = colors[i - 1]
+
         rr.log(
             f"{prefix}_velocity_lower_limit_{i}",
-            rr.SeriesLine(color=[255, 0, 0], name=f"joint_velocity_lower_limit_{i}"),
+            rr.SeriesLine(color=[176, 49, 40], name=f"joint_velocity_lower_limit_{i}", width=4),
             timeless=True,
         )
         rr.log(
             f"{prefix}_velocity_upper_limit_{i}",
-            rr.SeriesLine(color=[255, 0, 0], name=f"joint_velocity_upper_limit_{i}"),
+            rr.SeriesLine(color=[176, 49, 40], name=f"joint_velocity_upper_limit_{i}", width=4),
             timeless=True,
         )
 
         rr.log(
             f"{prefix}_acceleration_lower_limit_{i}",
-            rr.SeriesLine(color=[255, 0, 0], name=f"joint_acceleration_lower_limit_{i}"),
+            rr.SeriesLine(color=[176, 49, 40], name=f"joint_acceleration_lower_limit_{i}", width=4),
             timeless=True,
         )
         rr.log(
             f"{prefix}_acceleration_upper_limit_{i}",
-            rr.SeriesLine(color=[255, 0, 0], name=f"joint_acceleration_upper_limit_{i}"),
+            rr.SeriesLine(color=[176, 49, 40], name=f"joint_acceleration_upper_limit_{i}", width=4),
             timeless=True,
         )
 
         rr.log(
             f"{prefix}_position_lower_limit_{i}",
-            rr.SeriesLine(color=[255, 0, 0], name=f"joint_position_lower_limit_{i}"),
+            rr.SeriesLine(color=[176, 49, 40], name=f"joint_position_lower_limit_{i}", width=4),
             timeless=True,
         )
         rr.log(
             f"{prefix}_position_upper_limit_{i}",
-            rr.SeriesLine(color=[255, 0, 0], name=f"joint_position_upper_limit_{i}"),
+            rr.SeriesLine(color=[176, 49, 40], name=f"joint_position_upper_limit_{i}", width=4),
             timeless=True,
         )
 
         rr.log(
             f"{prefix}_torque_limit_{i}",
-            rr.SeriesLine(color=[255, 0, 0], name=f"joint_torques_lower_limit_{i}"),
+            rr.SeriesLine(color=[176, 49, 40], name=f"joint_torques_lower_limit_{i}", width=4),
+            timeless=True,
+        )
+
+
+    for i in range(1, 7):
+        prefix = "motion/joint"
+        color = colors[i - 1]
+
+        rr.log(
+            f"{prefix}_velocity_{i}",
+            rr.SeriesLine(color=color, name=f"joint_velocity_{i}", width=2),
+            timeless=True,
+        )
+        rr.log(
+            f"{prefix}_velocity_{i}",
+            rr.SeriesLine(color=color, name=f"joint_velocity_{i}", width=2),
+            timeless=True,
+        )
+
+        rr.log(
+            f"{prefix}_acceleration_{i}",
+            rr.SeriesLine(color=color, name=f"joint_acceleration_{i}", width=2),
+            timeless=True,
+        )
+        rr.log(
+            f"{prefix}_acceleration_{i}",
+            rr.SeriesLine(color=color, name=f"joint_acceleration_{i}", width=2),
+            timeless=True,
+        )
+
+        rr.log(
+            f"{prefix}_position_{i}",
+            rr.SeriesLine(color=color, name=f"joint_position_{i}", width=2),
+            timeless=True,
+        )
+        rr.log(
+            f"{prefix}_position_{i}",
+            rr.SeriesLine(color=color, name=f"joint_position_{i}", width=2),
+            timeless=True,
+        )
+
+        rr.log(
+            f"{prefix}_torque_{i}",
+            rr.SeriesLine(color=color, name=f"joint_torques_{i}", width=2),
             timeless=True,
         )
 
@@ -77,21 +135,21 @@ def configure_tcp_line_colors():
     Configure time series lines for motion data.
     """
     series_specs = [
-        ("tcp_velocity", [255, 255, 255]),
-        ("tcp_acceleration", [255, 255, 255]),
-        ("tcp_orientation_velocity", [255, 255, 255]),
-        ("tcp_orientation_acceleration", [255, 255, 255]),
-        ("time", [255, 255, 255]),
-        ("location_on_trajectory", [255, 255, 255]),
-        ("tcp_acceleration_lower_limit", [255, 0, 0]),
-        ("tcp_acceleration_upper_limit", [255, 0, 0]),
-        ("tcp_orientation_acceleration_lower_limit", [255, 0, 0]),
-        ("tcp_orientation_acceleration_upper_limit", [255, 0, 0]),
-        ("tcp_velocity_limit", [255, 0, 0]),
-        ("tcp_orientation_velocity_limit", [255, 0, 0]),
+        ("tcp_velocity", [136, 58, 255], 2),
+        ("tcp_acceleration", [136, 58, 255], 2),
+        ("tcp_orientation_velocity", [136, 58, 255], 2),
+        ("tcp_orientation_acceleration", [136, 58, 255], 2),
+        ("time", [136, 58, 255], 2),
+        ("location_on_trajectory", [136, 58, 255], 2),
+        ("tcp_acceleration_lower_limit", [255, 0, 0], 4),
+        ("tcp_acceleration_upper_limit", [255, 0, 0], 4),
+        ("tcp_orientation_acceleration_lower_limit", [255, 0, 0], 4),
+        ("tcp_orientation_acceleration_upper_limit", [255, 0, 0], 4),
+        ("tcp_velocity_limit", [255, 0, 0], 4),
+        ("tcp_orientation_velocity_limit", [255, 0, 0], 4),
     ]
-    for name, color in series_specs:
-        rr.log(f"motion/{name}", rr.SeriesLine(color=color, name=name), timeless=True)
+    for name, color, width in series_specs:
+        rr.log(f"motion/{name}", rr.SeriesLine(color=color, name=name, width=width), timeless=True)
 
 
 def joint_content_lists():
@@ -156,7 +214,7 @@ def get_default_blueprint(motion_group_list: list):
 
     return rrb.Blueprint(
         rrb.Horizontal(
-            rrb.Spatial3DView(contents=contents, name="Motion"),
+            rrb.Spatial3DView(contents=contents, name="Motion", background=[20,22,35]),
             rrb.Tabs(
                 rrb.Vertical(
                     rrb.TimeSeriesView(
@@ -629,8 +687,6 @@ async def fetch_and_process_motion(
         base_entity_path="motion",
         glb_path=f"models/{model_from_controller}.glb",
     )
-
-    print(f"Processing motion trajectory for {motion_id}.", flush=True)
 
     # Calculate time offset
     processed_motions = load_processed_motions()
