@@ -1,36 +1,31 @@
 from typing import Any, List, Tuple
+
 import numpy as np
-from scipy.spatial import ConvexHull
 import trimesh
+from scipy.spatial import ConvexHull
+
 
 class HullVisualizer:
-    
     @staticmethod
-    def compute_hull_mesh(polygons: List[np.ndarray]) -> Tuple[List[List[float]], List[List[int]], List[List[float]]]:
+    def compute_hull_mesh(
+        polygons: List[np.ndarray],
+    ) -> Tuple[List[List[float]], List[List[int]], List[List[float]]]:
         """Convert polygons to mesh with optimized hull generation."""
         vertices = np.vstack(polygons)
-        
+
         # Custom qhull options for better quality
         qhull_opts = trimesh.convex.QhullOptions(
-            Qt=True,    # Triangulated output
-            QJ=True,    # Joggled input for precision
-            Qc=True,    # Keep coplanar points
-            Qx=True,    # Exact pre-merges
-            QbB=True,   # Scale to unit cube
-            Pp=True     # Remove precision warnings
+            Qt=True,  # Triangulated output
+            QJ=True,  # Joggled input for precision
+            Qc=True,  # Keep coplanar points
+            Qx=True,  # Exact pre-merges
+            QbB=True,  # Scale to unit cube
+            Pp=True,  # Remove precision warnings
         )
-        
-        mesh = trimesh.convex.convex_hull(
-            vertices,
-            qhull_options=qhull_opts,
-            repair=True
-        )
-        
-        return (
-            mesh.vertices.tolist(),
-            mesh.faces.tolist(),
-            mesh.vertex_normals.tolist()
-        )
+
+        mesh = trimesh.convex.convex_hull(vertices, qhull_options=qhull_opts, repair=True)
+
+        return (mesh.vertices.tolist(), mesh.faces.tolist(), mesh.vertex_normals.tolist())
 
     @staticmethod
     def plane_from_triangle(p0, p1, p2, normal_epsilon=1e-6):

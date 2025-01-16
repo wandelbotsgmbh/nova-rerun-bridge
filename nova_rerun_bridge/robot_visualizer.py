@@ -1,11 +1,14 @@
 import re
 from typing import List
+
 import numpy as np
 import rerun as rr
 import trimesh
-from scipy.spatial.transform import Rotation
 from nova.api import models
+from scipy.spatial.transform import Rotation
+
 from nova_rerun_bridge.dh_robot import DHRobot
+
 
 class RobotVisualizer:
     def __init__(
@@ -336,9 +339,7 @@ class RobotVisualizer:
         for link_index, geometries in self.link_geometries.items():
             link_transform = transforms[link_index]
             for i, geom in enumerate(geometries):
-                entity_path = (
-                    f"{self.base_entity_path}/safety_from_controller/links/link_{link_index}/geometry_{i}"
-                )
+                entity_path = f"{self.base_entity_path}/safety_from_controller/links/link_{link_index}/geometry_{i}"
                 final_transform = link_transform @ self.geometry_pose_to_matrix(geom.init_pose)
 
                 self.init_geometry(entity_path, geom.capsule)
@@ -429,9 +430,7 @@ class RobotVisualizer:
             for link_index, geometries in self.link_geometries.items():
                 link_transform = transforms[link_index]
                 for i, geom in enumerate(geometries):
-                    entity_path = (
-                        f"{self.base_entity_path}/safety_from_controller/links/link_{link_index}/geometry_{i}"
-                    )
+                    entity_path = f"{self.base_entity_path}/safety_from_controller/links/link_{link_index}/geometry_{i}"
                     final_transform = link_transform @ self.geometry_pose_to_matrix(geom.init_pose)
                     self.init_geometry(entity_path, geom.capsule)
                     collect_geometry_data(entity_path, final_transform)

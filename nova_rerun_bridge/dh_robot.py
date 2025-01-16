@@ -1,6 +1,8 @@
 from typing import List
+
 import numpy as np
 from nova.api import models
+
 
 class DHRobot:
     """A class for handling DH parameters and computing joint positions."""

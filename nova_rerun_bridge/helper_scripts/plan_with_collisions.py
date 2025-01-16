@@ -1,8 +1,9 @@
 from asyncio import run
-from decouple import config
-import wandelbots_api_client as nova
-from loguru import logger
+
 import numpy as np
+import wandelbots_api_client as nova
+from decouple import config
+from loguru import logger
 
 NOVA_API_HOST = config("NOVA_API", default=None)
 NOVA_ACCESS_TOKEN = config("NOVA_ACCESS_TOKEN", default=None)
@@ -15,12 +16,12 @@ CELL_CONFIG = {
                 "kind": "VirtualController",
                 "manufacturer": "universalrobots",
                 "position": "[1.17,-1.658,1.405,-1.571,-1.571,1.17,0]",
-                "type": "universalrobots-ur5e"
+                "type": "universalrobots-ur5e",
             },
-            "name": "ur"
+            "name": "ur",
         }
     ],
-    "name": "cell"
+    "name": "cell",
 }
 
 
@@ -33,7 +34,7 @@ def get_api_client(nova_host: str) -> nova.ApiClient:
 
 
 async def get_motion_group_infos(
-        client: nova.ApiClient, cell_name: str, tcp_id: str
+    client: nova.ApiClient, cell_name: str, tcp_id: str
 ) -> tuple[str, nova.models.OptimizerSetup]:
     controller_api = nova.ControllerApi(client)
     motion_group_api = nova.MotionGroupApi(client)
@@ -51,7 +52,9 @@ async def get_motion_group_infos(
     return motion_group_id, robot_setup
 
 
-async def build_collision_world(client: nova.ApiClient, cell_name: str, robot_setup: nova.models.OptimizerSetup) -> str:
+async def build_collision_world(
+    client: nova.ApiClient, cell_name: str, robot_setup: nova.models.OptimizerSetup
+) -> str:
     collision_api = nova.StoreCollisionComponentsApi(client)
     scene_api = nova.StoreCollisionScenesApi(client)
 
@@ -59,48 +62,48 @@ async def build_collision_world(client: nova.ApiClient, cell_name: str, robot_se
     random_vertices = [1000, 1000, 0] + 1000 * np.random.random((1000, 3))
     collider = nova.models.Collider(
         shape=nova.models.ColliderShape(
-            nova.models.ConvexHull2(vertices=random_vertices.tolist(), shape_type="convex_hull"))
+            nova.models.ConvexHull2(vertices=random_vertices.tolist(), shape_type="convex_hull")
+        )
     )
     await collision_api.store_collider(cell=cell_name, collider="workpiece", collider2=collider)
 
     # define TCP collider geometry
     tool_collider = nova.models.Collider(
         shape=nova.models.ColliderShape(
-            nova.models.Box2(
-                size_x=100,
-                size_y=100,
-                size_z=100,
-                shape_type="box",
-                box_type="FULL",
-            )
+            nova.models.Box2(size_x=100, size_y=100, size_z=100, shape_type="box", box_type="FULL")
         )
     )
-    await collision_api.store_collision_tool(cell=cell_name, tool="tool_box",
-                                             request_body={"tool_collider": tool_collider})
+    await collision_api.store_collision_tool(
+        cell=cell_name, tool="tool_box", request_body={"tool_collider": tool_collider}
+    )
 
     # define robot link geometries
-    robot_link_colliders = await collision_api.get_default_link_chain(cell=cell_name,
-                                                                      motion_group_model=robot_setup.motion_group_type)
-    await collision_api.store_collision_link_chain(cell=cell_name, link_chain="robot_links",
-                                                   collider=robot_link_colliders)
+    robot_link_colliders = await collision_api.get_default_link_chain(
+        cell=cell_name, motion_group_model=robot_setup.motion_group_type
+    )
+    await collision_api.store_collision_link_chain(
+        cell=cell_name, link_chain="robot_links", collider=robot_link_colliders
+    )
 
     # assemble scene
     scene = nova.models.CollisionScene(
         colliders={"workpiece": collider},
         motion_groups={
             "motion_group": nova.models.CollisionMotionGroup(
-                tool={"tool_geometry": tool_collider},
-                link_chain=robot_link_colliders,
+                tool={"tool_geometry": tool_collider}, link_chain=robot_link_colliders
             )
         },
     )
     scene_id = "collision_scene"
-    await scene_api.store_collision_scene(cell_name, scene_id, nova.models.CollisionSceneAssembly(scene=scene))
+    await scene_api.store_collision_scene(
+        cell_name, scene_id, nova.models.CollisionSceneAssembly(scene=scene)
+    )
     return scene_id
 
 
-async def plan_path(client: nova.ApiClient, cell_name: str, scene_id: str,
-                    robot_setup: nova.models.OptimizerSetup) -> nova.models.PlanTrajectoryResponse:
+async def plan_path(
+    client: nova.ApiClient, cell_name: str, scene_id: str, robot_setup: nova.models.OptimizerSetup
+) -> nova.models.PlanTrajectoryResponse:
     motion_api = nova.MotionApi(client)
     scene_api = nova.StoreCollisionScenesApi(client)
     start_joints = [1.17, -1.658, 1.405, -1.571, -1.571, 1.17]
@@ -112,19 +115,28 @@ async def plan_path(client: nova.ApiClient, cell_name: str, scene_id: str,
         start_joint_position=start_joints,
         motion_commands=[
             nova.models.MotionCommand(
-                path=nova.models.MotionCommandPath(nova.models.path_line.PathLine(
-                    target_pose=nova.models.Pose2(position=goal_pose[:3], orientation=goal_pose[3:]),
-                    path_definition_name="PathLine")),
+                path=nova.models.MotionCommandPath(
+                    nova.models.path_line.PathLine(
+                        target_pose=nova.models.Pose2(
+                            position=goal_pose[:3], orientation=goal_pose[3:]
+                        ),
+                        path_definition_name="PathLine",
+                    )
+                ),
                 blending=nova.models.MotionCommandBlending(
-                    nova.models.motion_command_blending.BlendingPosition(position_zone_radius=20,
-                                                                         blending_name="BlendingPosition")),
-            ),
+                    nova.models.motion_command_blending.BlendingPosition(
+                        position_zone_radius=20, blending_name="BlendingPosition"
+                    )
+                ),
+            )
         ],
         static_colliders=scene.colliders,
         collision_motion_group=scene.motion_groups.get("motion_group"),
     )
 
-    plan_result = await motion_api.plan_trajectory(cell=cell_name, plan_trajectory_request=plan_request)
+    plan_result = await motion_api.plan_trajectory(
+        cell=cell_name, plan_trajectory_request=plan_request
+    )
     if isinstance(plan_result.response.actual_instance, nova.models.JointTrajectory):
         logger.info("Plan request successful.")
     else:
@@ -136,11 +148,11 @@ async def plan_path(client: nova.ApiClient, cell_name: str, scene_id: str,
 
 
 async def upload_planned_motion(
-        client: nova.ApiClient,
-        plan_response: nova.models.PlanTrajectoryResponse,
-        cell_name: str,
-        motion_group_id: str,
-        tcp_id: str,
+    client: nova.ApiClient,
+    plan_response: nova.models.PlanTrajectoryResponse,
+    cell_name: str,
+    motion_group_id: str,
+    tcp_id: str,
 ) -> str:
     motion_api = nova.MotionApi(api_client=client)
     trajectory = plan_response.response.actual_instance
@@ -150,7 +162,9 @@ async def upload_planned_motion(
         times=trajectory.times,
         joint_positions=[nova.models.Joints(joints=j.joints) for j in trajectory.joint_positions],
     )
-    plan_response = await motion_api.load_planned_motion(cell=cell_name, planned_motion=planned_motion)
+    plan_response = await motion_api.load_planned_motion(
+        cell=cell_name, planned_motion=planned_motion
+    )
 
     if plan_response.plan_successful_response is not None:
         motion_id = plan_response.plan_successful_response.motion
@@ -176,7 +190,9 @@ async def execute_motion(client: nova.ApiClient, cell_name: str, motion_id: str)
         logger.info(f"{m.stop_response.location_on_trajectory=}")
 
     # Move along trajectory
-    movement_stream = motion_api.stream_move_forward(cell=cell_name, motion=motion_id, playback_speed_in_percent=100)
+    movement_stream = motion_api.stream_move_forward(
+        cell=cell_name, motion=motion_id, playback_speed_in_percent=100
+    )
     async for m in movement_stream:
         if m.move_response:
             continue

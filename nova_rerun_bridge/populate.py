@@ -1,14 +1,15 @@
+import asyncio
 from typing import Dict, List
-from nova import Nova
+
 import numpy as np
 import rerun as rr
-import asyncio
-import trimesh
-from nova.api import models
-from scipy.spatial.transform import Rotation as R
 import rerun.blueprint as rrb
+import trimesh
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
+from nova import Nova
+from nova.api import models
+from scipy.spatial.transform import Rotation as R
 
 from nova_rerun_bridge import colors
 from nova_rerun_bridge.dh_robot import DHRobot
@@ -75,7 +76,6 @@ def configure_joint_line_colors():
             rr.SeriesLine(color=[176, 49, 40], name=f"joint_torques_lower_limit_{i}", width=4),
             timeless=True,
         )
-
 
     for i in range(1, 7):
         prefix = "motion/joint"
@@ -205,7 +205,7 @@ def get_default_blueprint(motion_group_list: list):
 
     return rrb.Blueprint(
         rrb.Horizontal(
-            rrb.Spatial3DView(contents=contents, name="3D Nova", background=[20,22,35]),
+            rrb.Spatial3DView(contents=contents, name="3D Nova", background=[20, 22, 35]),
             rrb.Tabs(
                 rrb.Vertical(
                     rrb.TimeSeriesView(
@@ -305,9 +305,7 @@ def configure_logging_blueprints(motion_group_list: list):
 
 
 def log_joint_data(
-    trajectory: List[models.TrajectorySample],
-    times_column,
-    optimizer_config: models.OptimizerSetup,
+    trajectory: List[models.TrajectorySample], times_column, optimizer_config: models.OptimizerSetup
 ) -> None:
     """
     Log joint-related data (position, velocity, acceleration, torques) from a trajectory as columns.
@@ -409,9 +407,7 @@ def log_tcp_pose(trajectory: List[models.TrajectorySample], times_column):
 
 
 def log_scalar_values(
-    trajectory: List[models.TrajectorySample],
-    times_column,
-    optimizer_config: models.OptimizerSetup,
+    trajectory: List[models.TrajectorySample], times_column, optimizer_config: models.OptimizerSetup
 ):
     """
     Log scalar values such as TCP velocity, acceleration, orientation velocity/acceleration, time, and location.
@@ -490,6 +486,7 @@ def log_collision_scenes(collision_scenes: Dict[str, models.CollisionScene]):
         entity_path = f"collision_scenes/{scene_id}"
         for collider_id, collider in scene.colliders.items():
             log_colliders_once(entity_path, {collider_id: collider})
+
 
 def log_colliders_once(entity_path: str, colliders: Dict[str, models.Collider]):
     for collider_id, collider in colliders.items():
@@ -612,9 +609,7 @@ def log_colliders_once(entity_path: str, colliders: Dict[str, models.Collider]):
                 rr.log(
                     f"{entity_path}/{collider_id}",
                     rr.LineStrips3D(
-                        line_segments,
-                        radii=rr.Radius.ui_points(1.5),
-                        colors=[colors.colors[2]],
+                        line_segments, radii=rr.Radius.ui_points(1.5), colors=[colors.colors[2]]
                     ),
                     static=True,
                     timeless=True,
@@ -756,11 +751,15 @@ async def process_motions():
             rr.set_time_seconds(TIME_INTERVAL_NAME, time_offset)
 
             # Filter out already processed motions
-            new_motions = [motion_id for motion_id in motions.motions if motion_id not in processed_motion_ids]
+            new_motions = [
+                motion_id for motion_id in motions.motions if motion_id not in processed_motion_ids
+            ]
 
-            for motion_id in new_motions:                
+            for motion_id in new_motions:
                 print(f"Processing motion {motion_id}.", flush=True)
-                collision_scenes = await store_collision_scenes_api.list_stored_collision_scenes("cell")
+                collision_scenes = await store_collision_scenes_api.list_stored_collision_scenes(
+                    "cell"
+                )
                 log_collision_scenes(collision_scenes)
 
                 # Fetch motion details
@@ -806,6 +805,7 @@ async def process_motions():
     finally:
         job_running = False
         await nova._api_client.close()
+
 
 async def main():
     """Main entry point for the application."""
