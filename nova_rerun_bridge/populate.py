@@ -10,6 +10,7 @@ import rerun.blueprint as rrb
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 
+from nova_rerun_bridge import colors
 from nova_rerun_bridge.dh_robot import DHRobot
 from nova_rerun_bridge.hull_visualizer import HullVisualizer
 from nova_rerun_bridge.motion_storage import load_processed_motions, save_processed_motion
@@ -31,21 +32,10 @@ def configure_joint_line_colors():
     """
     Log the visualization lines for joint limit boundaries.
     """
-    colors = [[245, 243, 254], 
-              [236, 234, 253], 
-              [220, 215, 251], 
-              [194, 183, 248], 
-              [157, 131, 246], 
-              [142,  86, 251],
-              [136,  58, 255],
-              [116,  39, 222],
-              [ 94,  19, 185],
-              [ 75,   0, 153],
-              [ 49,   0,   1]]
 
     for i in range(1, 7):
         prefix = "motion/joint"
-        color = colors[i - 1]
+        color = colors.colors[i - 1]
 
         rr.log(
             f"{prefix}_velocity_lower_limit_{i}",
@@ -89,7 +79,7 @@ def configure_joint_line_colors():
 
     for i in range(1, 7):
         prefix = "motion/joint"
-        color = colors[i - 1]
+        color = colors.colors[i - 1]
 
         rr.log(
             f"{prefix}_velocity_{i}",
@@ -193,7 +183,7 @@ def get_default_blueprint(motion_group_list: list):
     """
 
     # Contents for the Spatial3DView
-    contents = ["motion/**", "colliders/**"] + [f"{group}/**" for group in motion_group_list]
+    contents = ["motion/**", "collision_scenes/**"] + [f"{group}/**" for group in motion_group_list]
 
     time_ranges = rrb.VisibleTimeRange(
         TIME_INTERVAL_NAME,
@@ -215,7 +205,7 @@ def get_default_blueprint(motion_group_list: list):
 
     return rrb.Blueprint(
         rrb.Horizontal(
-            rrb.Spatial3DView(contents=contents, name="Motion", background=[20,22,35]),
+            rrb.Spatial3DView(contents=contents, name="3D Nova", background=[20,22,35]),
             rrb.Tabs(
                 rrb.Vertical(
                     rrb.TimeSeriesView(
@@ -495,7 +485,13 @@ def log_scalar_values(
             )
 
 
-def log_colliders_once(colliders: Dict[str, models.Collider]):
+def log_collision_scenes(collision_scenes: Dict[str, models.CollisionScene]):
+    for scene_id, scene in collision_scenes.items():
+        entity_path = f"collision_scenes/{scene_id}"
+        for collider_id, collider in scene.colliders.items():
+            log_colliders_once(entity_path, {collider_id: collider})
+
+def log_colliders_once(entity_path: str, colliders: Dict[str, models.Collider]):
     for collider_id, collider in colliders.items():
         # Default components
         default_position = models.Vector3d(x=0.0, y=0.0, z=0.0)
@@ -543,7 +539,7 @@ def log_colliders_once(colliders: Dict[str, models.Collider]):
 
         if collider.shape.actual_instance.shape_type == "sphere":
             rr.log(
-                f"colliders/{collider_id}",
+                f"{entity_path}/{collider_id}",
                 rr.Ellipsoids3D(
                     radii=[
                         collider.shape.actual_instance.radius,
@@ -558,7 +554,7 @@ def log_colliders_once(colliders: Dict[str, models.Collider]):
 
         elif collider.shape.actual_instance.shape_type == "box":
             rr.log(
-                f"colliders/{collider_id}",
+                f"{entity_path}/{collider_id}",
                 rr.Boxes3D(
                     centers=[[pose.position.x, pose.position.y, pose.position.z]],
                     half_sizes=[
@@ -596,7 +592,7 @@ def log_colliders_once(colliders: Dict[str, models.Collider]):
             if polygons:
                 line_segments = [p.tolist() for p in polygons]
                 rr.log(
-                    f"colliders/{collider_id}",
+                    f"{entity_path}/{collider_id}",
                     rr.LineStrips3D(
                         line_segments,
                         radii=rr.Radius.ui_points(0.75),
@@ -614,11 +610,25 @@ def log_colliders_once(colliders: Dict[str, models.Collider]):
             if polygons:
                 line_segments = [p.tolist() for p in polygons]
                 rr.log(
-                    f"colliders/{collider_id}",
+                    f"{entity_path}/{collider_id}",
                     rr.LineStrips3D(
                         line_segments,
-                        radii=rr.Radius.ui_points(0.75),
-                        colors=[[221, 193, 193, 255]],
+                        radii=rr.Radius.ui_points(1.5),
+                        colors=[colors.colors[2]],
+                    ),
+                    static=True,
+                    timeless=True,
+                )
+
+                vertices, triangles, normals = HullVisualizer.compute_hull_mesh(polygons)
+
+                rr.log(
+                    f"{entity_path}/{collider_id}",
+                    rr.Mesh3D(
+                        vertex_positions=vertices,
+                        triangle_indices=triangles,
+                        vertex_normals=normals,
+                        albedo_factor=[colors.colors[0]],
                     ),
                     static=True,
                     timeless=True,
@@ -646,7 +656,7 @@ def process_trajectory(
         line_segments_batch.append(joint_positions)
 
     rr.send_columns(
-        "motion/joints",
+        "motion/dh_parameters",
         times=[times_column],
         components=[
             rr.LineStrips3D.indicator(),
@@ -727,7 +737,7 @@ async def process_motions():
     motion_group_infos_api = nova._api_client.motion_group_infos_api
     motion_api = nova._api_client.motion_api
     motion_group_api = nova._api_client.motion_group_api
-    store_collision_api = nova._api_client.store_collision_components_api
+    store_collision_scenes_api = nova._api_client.store_collision_scenes_api
 
     try:
         motions = await motion_api.list_motions("cell")
@@ -750,8 +760,8 @@ async def process_motions():
 
             for motion_id in new_motions:                
                 print(f"Processing motion {motion_id}.", flush=True)
-                colliders = await store_collision_api.list_stored_colliders("cell")
-                log_colliders_once(colliders)
+                collision_scenes = await store_collision_scenes_api.list_stored_collision_scenes("cell")
+                log_collision_scenes(collision_scenes)
 
                 # Fetch motion details
                 motion = await motion_api.get_planned_motion("cell", motion_id)

@@ -305,7 +305,7 @@ class RobotVisualizer:
                         filtered_geoms.append(geom)
 
                 for geom in filtered_geoms:
-                    entity_path = f"{self.base_entity_path}/mesh/links/link_{link_index}/mesh/{geom.metadata.get('node')}"
+                    entity_path = f"{self.base_entity_path}/visual/links/link_{link_index}/mesh/{geom.metadata.get('node')}"
 
                     # calculate the inverse transform to get the mesh in the correct position
                     cumulative_transform, _ = self.scene.graph.get(frame_to=joint_name)
@@ -337,7 +337,7 @@ class RobotVisualizer:
             link_transform = transforms[link_index]
             for i, geom in enumerate(geometries):
                 entity_path = (
-                    f"{self.base_entity_path}/collision/links/link_{link_index}/geometry_{i}"
+                    f"{self.base_entity_path}/safety_from_controller/links/link_{link_index}/geometry_{i}"
                 )
                 final_transform = link_transform @ self.geometry_pose_to_matrix(geom.init_pose)
 
@@ -348,7 +348,7 @@ class RobotVisualizer:
         if self.tcp_geometries:
             tcp_transform = transforms[-1]  # the final frame transform
             for i, geom in enumerate(self.tcp_geometries):
-                entity_path = f"{self.base_entity_path}/collision/tcp/geometry_{i}"
+                entity_path = f"{self.base_entity_path}/safety_from_controller/tcp/geometry_{i}"
                 final_transform = tcp_transform @ self.geometry_pose_to_matrix(geom.init_pose)
 
                 self.init_geometry(entity_path, geom.capsule)
@@ -398,7 +398,7 @@ class RobotVisualizer:
                             filtered_geoms.append(geom)
 
                     for geom in filtered_geoms:
-                        entity_path = f"{self.base_entity_path}/mesh/links/link_{link_index}/mesh/{geom.metadata.get('node')}"
+                        entity_path = f"{self.base_entity_path}/visual/links/link_{link_index}/mesh/{geom.metadata.get('node')}"
 
                         # calculate the inverse transform to get the mesh in the correct position
                         cumulative_transform, _ = self.scene.graph.get(frame_to=joint_name)
@@ -430,7 +430,7 @@ class RobotVisualizer:
                 link_transform = transforms[link_index]
                 for i, geom in enumerate(geometries):
                     entity_path = (
-                        f"{self.base_entity_path}/collision/links/link_{link_index}/geometry_{i}"
+                        f"{self.base_entity_path}/safety_from_controller/links/link_{link_index}/geometry_{i}"
                     )
                     final_transform = link_transform @ self.geometry_pose_to_matrix(geom.init_pose)
                     self.init_geometry(entity_path, geom.capsule)
@@ -440,7 +440,7 @@ class RobotVisualizer:
             if self.tcp_geometries:
                 tcp_transform = transforms[-1]  # End-effector transform
                 for i, geom in enumerate(self.tcp_geometries):
-                    entity_path = f"{self.base_entity_path}/collision/tcp/geometry_{i}"
+                    entity_path = f"{self.base_entity_path}/safety_from_controller/tcp/geometry_{i}"
                     final_transform = tcp_transform @ self.geometry_pose_to_matrix(geom.init_pose)
                     self.init_geometry(entity_path, geom.capsule)
                     collect_geometry_data(entity_path, final_transform)

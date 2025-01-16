@@ -5,6 +5,7 @@ import asyncio
 
 from scipy.spatial.transform import Rotation as R
 
+from nova_rerun_bridge import colors
 from nova_rerun_bridge.dh_robot import DHRobot
 from nova_rerun_bridge.hull_visualizer import HullVisualizer
 from nova_rerun_bridge.robot_visualizer import RobotVisualizer
@@ -75,9 +76,11 @@ def log_joint_positions_once(motion_group: str, robot: DHRobot, joint_position):
     line_segments = [
         [joint_positions[i], joint_positions[i + 1]] for i in range(len(joint_positions) - 1)
     ]
+    segment_colors = [colors.colors[i % len(colors.colors)] for i in range(len(line_segments))]
+    
     rr.log(
-        f"{motion_group}/joints",
-        rr.LineStrips3D(line_segments, colors=[[0.5, 1.0, 0.5, 1.0]]),
+        f"{motion_group}/dh_parameters",
+        rr.LineStrips3D(line_segments, colors=segment_colors),
         static=True,
     )
 
