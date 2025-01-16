@@ -29,6 +29,3 @@ jobs:
 
       - name: Check ruff for linting
         run: poetry run ruff check .
-
-      - name: Check notebooks with nbqa and ruff
-        run: poetry run nbqa ruff .
