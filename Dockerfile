@@ -26,10 +26,10 @@ COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
 WORKDIR /app
 COPY nginx.conf /etc/nginx/nginx.conf
 COPY nginx.http.conf.template .
-COPY scripts scripts
+COPY src src
 COPY static static
 
-COPY universalrobots-ur10e.glb /app/universalrobots-ur10e.glb
+COPY models models
 
 COPY start.sh /app/start.sh
 RUN chmod +x /app/start.sh

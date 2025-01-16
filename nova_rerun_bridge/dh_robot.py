@@ -1,11 +1,13 @@
+from typing import List
+
 import numpy as np
-from wandelbots_api_client.models import DHParameter, PlannerPose
+from nova.api import models
 
 
 class DHRobot:
     """A class for handling DH parameters and computing joint positions."""
 
-    def __init__(self, dh_parameters: [DHParameter], mounting: PlannerPose):
+    def __init__(self, dh_parameters: List[models.DHParameter], mounting: models.PlannerPose):
         """
         Initialize the DHRobot with DH parameters and a mounting pose.
         :param dh_parameters: List of DHParameter objects containing all joint configurations.
@@ -14,7 +16,7 @@ class DHRobot:
         self.dh_parameters = dh_parameters
         self.mounting = mounting
 
-    def pose_to_matrix(self, pose: PlannerPose):
+    def pose_to_matrix(self, pose: models.PlannerPose):
         """
         Convert a PlannerPose (with quaternion orientation) into a 4x4 homogeneous transformation matrix.
         :param pose: A PlannerPose object with position: Vector3d and orientation: Quaternion.
@@ -66,7 +68,7 @@ class DHRobot:
 
         return T
 
-    def dh_transform(self, dh_param: DHParameter, joint_rotation):
+    def dh_transform(self, dh_param: models.DHParameter, joint_rotation):
         """
         Compute the homogeneous transformation matrix for a given DH parameter and joint rotation.
         :param dh_param: A single DH parameter.

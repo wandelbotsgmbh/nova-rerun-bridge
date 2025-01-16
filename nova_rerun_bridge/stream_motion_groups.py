@@ -1,18 +1,19 @@
-from nova import Nova
+import asyncio
+
 import numpy as np
 import rerun as rr
-import asyncio
-import wandelbots_api_client as wb
-from hull_visualizer import HullVisualizer
-from robot_visualizer import RobotVisualizer
-from decouple import config
-
-from dh_robot import DHRobot
+from nova import Nova
 from scipy.spatial.transform import Rotation as R
+
+from nova_rerun_bridge import colors
+from nova_rerun_bridge.dh_robot import DHRobot
+from nova_rerun_bridge.hull_visualizer import HullVisualizer
+from nova_rerun_bridge.robot_visualizer import RobotVisualizer
 
 # Constants
 RECORDING_INTERVAL = 0.016  # 16ms per point
 TIME_INTERVAL_NAME = f"time_interval_{RECORDING_INTERVAL}"
+
 
 def log_safety_zones_once(motion_group: str, optimizer_config, robot: DHRobot):
     """
@@ -76,9 +77,11 @@ def log_joint_positions_once(motion_group: str, robot: DHRobot, joint_position):
     line_segments = [
         [joint_positions[i], joint_positions[i + 1]] for i in range(len(joint_positions) - 1)
     ]
+    segment_colors = [colors.colors[i % len(colors.colors)] for i in range(len(line_segments))]
+
     rr.log(
-        f"{motion_group}/joints",
-        rr.LineStrips3D(line_segments, colors=[[0.5, 1.0, 0.5, 1.0]]),
+        f"{motion_group}/dh_parameters",
+        rr.LineStrips3D(line_segments, colors=segment_colors),
         static=True,
     )
 
@@ -142,7 +145,9 @@ async def process_motion_group_state():
 
     for active_motion_group in motion_groups.instances:
         motion_group = active_motion_group.motion_group
-        optimizer_config = await motion_group_infos_api.get_optimizer_configuration("cell", motion_group)
+        optimizer_config = await motion_group_infos_api.get_optimizer_configuration(
+            "cell", motion_group
+        )
 
         # Initialize DHRobot and Visualizer
         robot = DHRobot(optimizer_config.dh_parameters, optimizer_config.mounting)
