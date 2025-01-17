@@ -3,306 +3,22 @@ from typing import Any, Dict, List, Tuple
 
 import numpy as np
 import rerun as rr
-import rerun.blueprint as rrb
-import trimesh
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 from nova import Nova
 from nova.api import models
 from scipy.spatial.transform import Rotation
 
-from nova_rerun_bridge import colors
-from nova_rerun_bridge.conversion_helpers import normalize_pose
+from nova_rerun_bridge.consts import RECORDING_INTERVAL, SCHEDULE_INTERVAL, TIME_INTERVAL_NAME
 from nova_rerun_bridge.dh_robot import DHRobot
-from nova_rerun_bridge.hull_visualizer import HullVisualizer
 from nova_rerun_bridge.motion_storage import load_processed_motions, save_processed_motion
+from nova_rerun_bridge.nova_reun_bridge import NovaRerunBridge
 from nova_rerun_bridge.robot_visualizer import RobotVisualizer
-
-# Configuration Constants
-SIZE = 10
-RECORDING_INTERVAL = 0.016  # 16ms per point
-SCHEDULE_INTERVAL = 5  # seconds
-TIME_INTERVAL_NAME = f"time_interval_{RECORDING_INTERVAL}"
 
 # Global run flags
 job_running = False
 first_run = True
 previous_motion_group_list = []
-
-
-def configure_joint_line_colors():
-    """
-    Log the visualization lines for joint limit boundaries.
-    """
-
-    for i in range(1, 7):
-        prefix = "motion/joint"
-        color = colors.colors[i - 1]
-
-        rr.log(
-            f"{prefix}_velocity_lower_limit_{i}",
-            rr.SeriesLine(color=[176, 49, 40], name=f"joint_velocity_lower_limit_{i}", width=4),
-            timeless=True,
-        )
-        rr.log(
-            f"{prefix}_velocity_upper_limit_{i}",
-            rr.SeriesLine(color=[176, 49, 40], name=f"joint_velocity_upper_limit_{i}", width=4),
-            timeless=True,
-        )
-
-        rr.log(
-            f"{prefix}_acceleration_lower_limit_{i}",
-            rr.SeriesLine(color=[176, 49, 40], name=f"joint_acceleration_lower_limit_{i}", width=4),
-            timeless=True,
-        )
-        rr.log(
-            f"{prefix}_acceleration_upper_limit_{i}",
-            rr.SeriesLine(color=[176, 49, 40], name=f"joint_acceleration_upper_limit_{i}", width=4),
-            timeless=True,
-        )
-
-        rr.log(
-            f"{prefix}_position_lower_limit_{i}",
-            rr.SeriesLine(color=[176, 49, 40], name=f"joint_position_lower_limit_{i}", width=4),
-            timeless=True,
-        )
-        rr.log(
-            f"{prefix}_position_upper_limit_{i}",
-            rr.SeriesLine(color=[176, 49, 40], name=f"joint_position_upper_limit_{i}", width=4),
-            timeless=True,
-        )
-
-        rr.log(
-            f"{prefix}_torque_limit_{i}",
-            rr.SeriesLine(color=[176, 49, 40], name=f"joint_torques_lower_limit_{i}", width=4),
-            timeless=True,
-        )
-
-    for i in range(1, 7):
-        prefix = "motion/joint"
-        color = colors.colors[i - 1]
-
-        rr.log(
-            f"{prefix}_velocity_{i}",
-            rr.SeriesLine(color=color, name=f"joint_velocity_{i}", width=2),
-            timeless=True,
-        )
-        rr.log(
-            f"{prefix}_velocity_{i}",
-            rr.SeriesLine(color=color, name=f"joint_velocity_{i}", width=2),
-            timeless=True,
-        )
-
-        rr.log(
-            f"{prefix}_acceleration_{i}",
-            rr.SeriesLine(color=color, name=f"joint_acceleration_{i}", width=2),
-            timeless=True,
-        )
-        rr.log(
-            f"{prefix}_acceleration_{i}",
-            rr.SeriesLine(color=color, name=f"joint_acceleration_{i}", width=2),
-            timeless=True,
-        )
-
-        rr.log(
-            f"{prefix}_position_{i}",
-            rr.SeriesLine(color=color, name=f"joint_position_{i}", width=2),
-            timeless=True,
-        )
-        rr.log(
-            f"{prefix}_position_{i}",
-            rr.SeriesLine(color=color, name=f"joint_position_{i}", width=2),
-            timeless=True,
-        )
-
-        rr.log(
-            f"{prefix}_torque_{i}",
-            rr.SeriesLine(color=color, name=f"joint_torques_{i}", width=2),
-            timeless=True,
-        )
-
-
-def configure_tcp_line_colors():
-    """
-    Configure time series lines for motion data.
-    """
-    series_specs = [
-        ("tcp_velocity", [136, 58, 255], 2),
-        ("tcp_acceleration", [136, 58, 255], 2),
-        ("tcp_orientation_velocity", [136, 58, 255], 2),
-        ("tcp_orientation_acceleration", [136, 58, 255], 2),
-        ("time", [136, 58, 255], 2),
-        ("location_on_trajectory", [136, 58, 255], 2),
-        ("tcp_acceleration_lower_limit", [176, 49, 40], 4),
-        ("tcp_acceleration_upper_limit", [176, 49, 40], 4),
-        ("tcp_orientation_acceleration_lower_limit", [176, 49, 40], 4),
-        ("tcp_orientation_acceleration_upper_limit", [176, 49, 40], 4),
-        ("tcp_velocity_limit", [176, 49, 40], 4),
-        ("tcp_orientation_velocity_limit", [176, 49, 40], 4),
-    ]
-    for name, color, width in series_specs:
-        rr.log(f"motion/{name}", rr.SeriesLine(color=color, name=name, width=width), timeless=True)
-
-
-def joint_content_lists():
-    """
-    Generate content lists for joint-related time series.
-    """
-    velocity_contents = [f"motion/joint_velocity_{i}" for i in range(1, 7)]
-    velocity_limits = [f"motion/joint_velocity_lower_limit_{i}" for i in range(1, 7)] + [
-        f"motion/joint_velocity_upper_limit_{i}" for i in range(1, 7)
-    ]
-
-    accel_contents = [f"motion/joint_acceleration_{i}" for i in range(1, 7)]
-    accel_limits = [f"motion/joint_acceleration_lower_limit_{i}" for i in range(1, 7)] + [
-        f"motion/joint_acceleration_upper_limit_{i}" for i in range(1, 7)
-    ]
-
-    pos_contents = [f"motion/joint_position_{i}" for i in range(1, 7)]
-    pos_limits = [f"motion/joint_position_lower_limit_{i}" for i in range(1, 7)] + [
-        f"motion/joint_position_upper_limit_{i}" for i in range(1, 7)
-    ]
-
-    torque_contents = [f"motion/joint_torque_{i}" for i in range(1, 7)]
-    torque_limits = [f"motion/joint_torque_limit_{i}" for i in range(1, 7)]
-
-    return (
-        velocity_contents,
-        velocity_limits,
-        accel_contents,
-        accel_limits,
-        pos_contents,
-        pos_limits,
-        torque_contents,
-        torque_limits,
-    )
-
-
-def get_default_blueprint(motion_group_list: list):
-    """
-    get logging blueprints for visualization.
-    """
-
-    # Contents for the Spatial3DView
-    contents = ["motion/**", "collision_scenes/**"] + [f"{group}/**" for group in motion_group_list]
-
-    time_ranges = rrb.VisibleTimeRange(
-        TIME_INTERVAL_NAME,
-        start=rrb.TimeRangeBoundary.cursor_relative(seconds=-2),
-        end=rrb.TimeRangeBoundary.cursor_relative(seconds=2),
-    )
-    plot_legend = rrb.PlotLegend(visible=False)
-
-    (
-        velocity_contents,
-        velocity_limits,
-        accel_contents,
-        accel_limits,
-        pos_contents,
-        pos_limits,
-        torque_contents,
-        torque_limits,
-    ) = joint_content_lists()
-
-    return rrb.Blueprint(
-        rrb.Horizontal(
-            rrb.Spatial3DView(contents=contents, name="3D Nova", background=[20, 22, 35]),
-            rrb.Tabs(
-                rrb.Vertical(
-                    rrb.TimeSeriesView(
-                        contents=["motion/tcp_velocity/**", "motion/tcp_velocity_limit/**"],
-                        name="TCP velocity",
-                        time_ranges=time_ranges,
-                        plot_legend=plot_legend,
-                    ),
-                    rrb.TimeSeriesView(
-                        contents=[
-                            "motion/tcp_acceleration/**",
-                            "motion/tcp_acceleration_lower_limit/**",
-                            "motion/tcp_acceleration_upper_limit/**",
-                        ],
-                        name="TCP acceleration",
-                        time_ranges=time_ranges,
-                        plot_legend=plot_legend,
-                    ),
-                    rrb.TimeSeriesView(
-                        contents=[
-                            "motion/tcp_orientation_velocity/**",
-                            "motion/tcp_orientation_velocity_limit/**",
-                        ],
-                        name="TCP orientation velocity",
-                        time_ranges=time_ranges,
-                        plot_legend=plot_legend,
-                    ),
-                    rrb.TimeSeriesView(
-                        contents=[
-                            "motion/tcp_orientation_acceleration/**",
-                            "motion/tcp_orientation_acceleration_lower_limit/**",
-                            "motion/tcp_orientation_acceleration_upper_limit/**",
-                        ],
-                        name="TCP orientation acceleration",
-                        time_ranges=time_ranges,
-                        plot_legend=plot_legend,
-                    ),
-                    rrb.TextLogView(origin="/logs", name="Logs"),
-                    name="Trajectory quantities",
-                    row_shares=[1, 1, 1, 1, 0.5],
-                ),
-                rrb.Vertical(
-                    rrb.TimeSeriesView(
-                        contents=velocity_contents + velocity_limits,
-                        name="Joint velocity",
-                        time_ranges=time_ranges,
-                        plot_legend=plot_legend,
-                    ),
-                    rrb.TimeSeriesView(
-                        contents=accel_contents + accel_limits,
-                        name="Joint acceleration",
-                        time_ranges=time_ranges,
-                        plot_legend=plot_legend,
-                    ),
-                    rrb.TimeSeriesView(
-                        contents=pos_contents + pos_limits,
-                        name="Joint position",
-                        time_ranges=time_ranges,
-                        plot_legend=plot_legend,
-                    ),
-                    rrb.TimeSeriesView(
-                        contents=torque_contents + torque_limits,
-                        name="Joint torque",
-                        time_ranges=time_ranges,
-                        plot_legend=plot_legend,
-                    ),
-                    name="Joint quantities",
-                ),
-                rrb.TimeSeriesView(
-                    contents="motion/time",
-                    name="Time trajectory",
-                    time_ranges=time_ranges,
-                    plot_legend=plot_legend,
-                ),
-                rrb.TimeSeriesView(
-                    contents="motion/location_on_trajectory",
-                    name="Location on trajectory",
-                    time_ranges=time_ranges,
-                    plot_legend=plot_legend,
-                ),
-            ),
-            column_shares=[1, 0.3],
-        ),
-        collapse_panels=True,
-    )
-
-
-def configure_logging_blueprints(motion_group_list: list):
-    """
-    Configure logging blueprints for visualization.
-    """
-
-    configure_tcp_line_colors()
-    configure_joint_line_colors()
-
-    rr.send_blueprint(get_default_blueprint(motion_group_list))
 
 
 def log_joint_data(
@@ -482,113 +198,6 @@ def log_scalar_values(
             )
 
 
-def log_collision_scenes(collision_scenes: Dict[str, models.CollisionScene]):
-    for scene_id, scene in collision_scenes.items():
-        entity_path = f"collision_scenes/{scene_id}"
-        for collider_id, collider in scene.colliders.items():
-            log_colliders_once(entity_path, {collider_id: collider})
-
-
-def log_colliders_once(entity_path: str, colliders: Dict[str, models.Collider]):
-    for collider_id, collider in colliders.items():
-        pose = normalize_pose(collider.pose)
-
-        if collider.shape.actual_instance.shape_type == "sphere":
-            rr.log(
-                f"{entity_path}/{collider_id}",
-                rr.Ellipsoids3D(
-                    radii=[
-                        collider.shape.actual_instance.radius,
-                        collider.shape.actual_instance.radius,
-                        collider.shape.actual_instance.radius,
-                    ],
-                    centers=[[pose.position.x, pose.position.y, pose.position.z]],
-                    colors=[(221, 193, 193, 255)],
-                ),
-                timeless=True,
-            )
-
-        elif collider.shape.actual_instance.shape_type == "box":
-            rr.log(
-                f"{entity_path}/{collider_id}",
-                rr.Boxes3D(
-                    centers=[[pose.position.x, pose.position.y, pose.position.z]],
-                    half_sizes=[
-                        collider.shape.actual_instance.size_x,
-                        collider.shape.actual_instance.size_y,
-                        collider.shape.actual_instance.size_z,
-                    ],
-                    colors=[(221, 193, 193, 255)],
-                ),
-                timeless=True,
-            )
-
-        elif collider.shape.actual_instance.shape_type == "capsule":
-            height = collider.shape.actual_instance.cylinder_height
-            radius = collider.shape.actual_instance.radius
-
-            # Generate trimesh capsule
-            capsule = trimesh.creation.capsule(height=height, radius=radius, count=[6, 8])
-
-            # Extract vertices and faces for solid visualization
-            vertices = np.array(capsule.vertices)
-
-            # Transform vertices to world position
-            transform = np.eye(4)
-            transform[:3, 3] = [pose.position.x, pose.position.y, pose.position.z - height / 2]
-            rot_mat = Rotation.from_rotvec(
-                np.array([pose.orientation.x, pose.orientation.y, pose.orientation.z])
-            )
-            transform[:3, :3] = rot_mat.as_matrix()
-
-            vertices = np.array([transform @ np.append(v, 1) for v in vertices])[:, :3]
-
-            polygons = HullVisualizer.compute_hull_outlines_from_points(vertices)
-
-            if polygons:
-                line_segments = [p.tolist() for p in polygons]
-                rr.log(
-                    f"{entity_path}/{collider_id}",
-                    rr.LineStrips3D(
-                        line_segments,
-                        radii=rr.Radius.ui_points(0.75),
-                        colors=[[221, 193, 193, 255]],
-                    ),
-                    static=True,
-                    timeless=True,
-                )
-
-        elif collider.shape.actual_instance.shape_type == "convex_hull":
-            polygons = HullVisualizer.compute_hull_outlines_from_points(
-                collider.shape.actual_instance.vertices
-            )
-
-            if polygons:
-                line_segments = [p.tolist() for p in polygons]
-                rr.log(
-                    f"{entity_path}/{collider_id}",
-                    rr.LineStrips3D(
-                        line_segments, radii=rr.Radius.ui_points(1.5), colors=[colors.colors[2]]
-                    ),
-                    static=True,
-                    timeless=True,
-                )
-
-                vertices, triangles, normals = HullVisualizer.compute_hull_mesh(polygons)
-
-                rr.log(
-                    f"{entity_path}/{collider_id}",
-                    rr.Mesh3D(
-                        vertex_positions=vertices,
-                        triangle_indices=triangles,
-                        vertex_normals=normals,
-                        albedo_factor=[colors.colors[0]],
-                    ),
-                    static=True,
-                    timeless=True,
-                )
-
-
 def process_trajectory(
     robot: DHRobot,
     visualizer: RobotVisualizer,
@@ -694,9 +303,6 @@ async def fetch_and_process_motion(
     # Process trajectory points
     process_trajectory(robot, visualizer, trajectory, optimizer_config, time_offset)
 
-    configure_tcp_line_colors()
-    configure_joint_line_colors()
-
     # Save the processed motion ID and trajectory time
     save_processed_motion(motion_id, trajectory_time)
 
@@ -710,6 +316,8 @@ async def process_motions():
     global previous_motion_group_list
 
     nova = Nova()
+    nova_bridge = NovaRerunBridge(nova, spawn=first_run)
+
     motion_group_infos_api = nova._api_client.motion_group_infos_api
     motion_api = nova._api_client.motion_api
     motion_group_api = nova._api_client.motion_group_api
@@ -741,7 +349,7 @@ async def process_motions():
                 collision_scenes = await store_collision_scenes_api.list_stored_collision_scenes(
                     "cell"
                 )
-                log_collision_scenes(collision_scenes)
+                await nova_bridge.log_collision_scenes()
 
                 # Fetch motion details
                 motion = await motion_api.get_planned_motion("cell", motion_id)
@@ -759,7 +367,7 @@ async def process_motions():
                     for active_motion_group in motion_groups.instances
                 ]
                 if motion_group_list != previous_motion_group_list:
-                    configure_logging_blueprints(motion_group_list=motion_group_list)
+                    await nova_bridge.setup_blueprint()
                     previous_motion_group_list = motion_group_list
 
                 if motion_id in processed_motion_ids:
@@ -792,9 +400,6 @@ async def process_motions():
 
 async def main():
     """Main entry point for the application."""
-    # Initialize Rerun
-    rr.init(application_id="nova", recording_id="nova_live", spawn=True)
-
     # Setup scheduler
     scheduler = AsyncIOScheduler()
     scheduler.add_job(

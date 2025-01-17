@@ -2,6 +2,7 @@ import rerun as rr
 from nova.core.nova import Nova
 
 from nova_rerun_bridge.blueprint import send_blueprint
+from nova_rerun_bridge.collision_scene import log_collision_scenes
 
 
 class NovaRerunBridge:
@@ -17,3 +18,12 @@ class NovaRerunBridge:
             active_motion_group.motion_group for active_motion_group in motion_groups.instances
         ]
         send_blueprint(motion_group_list)
+
+    async def log_collision_scenes(self):
+        # Fetch collision scenes and log them
+        collision_scenes = (
+            await self.nova._api_client.store_collision_scenes_api.list_stored_collision_scenes(
+                cell=self.nova.cell()._cell_id
+            )
+        )
+        log_collision_scenes(collision_scenes)
