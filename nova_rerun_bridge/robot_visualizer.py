@@ -7,7 +7,10 @@ import trimesh
 from nova.api import models
 from scipy.spatial.transform import Rotation
 
+from nova_rerun_bridge import colors
+from nova_rerun_bridge.conversion_helpers import normalize_pose
 from nova_rerun_bridge.dh_robot import DHRobot
+from nova_rerun_bridge.hull_visualizer import HullVisualizer
 
 
 class RobotVisualizer:
@@ -20,6 +23,8 @@ class RobotVisualizer:
         base_entity_path: str = "robot",
         albedo_factor: list = [255, 255, 255],
         glb_path: str = "",
+        collision_link_chain=None,
+        collision_tcp=None,
     ):
         """
         :param robot: DHRobot instance
@@ -38,6 +43,8 @@ class RobotVisualizer:
         self.base_entity_path = base_entity_path.rstrip("/")
         self.albedo_factor = albedo_factor
         self.mesh_loaded = False
+        self.collision_link_geometries = {}
+        self.collision_tcp_geometries = collision_tcp
 
         # This will hold the names of discovered joints (e.g. ["robot_J00", "robot_J01", ...])
         self.joint_names: List[str] = []
@@ -59,6 +66,9 @@ class RobotVisualizer:
         # Group geometries by link
         for gm in robot_model_geometries:
             self.link_geometries.setdefault(gm.link_index, []).append(gm.geometry)
+
+        # Group geometries by link
+        self.collision_link_geometries = collision_link_chain
 
     def discover_joints(self):
         """
@@ -125,7 +135,7 @@ class RobotVisualizer:
         self.layer_nodes_dict[joint] = same_layer
         return same_layer
 
-    def geometry_pose_to_matrix(self, init_pose):
+    def geometry_pose_to_matrix(self, init_pose: models.PlannerPose):
         # Convert init_pose to PlannerPose and then to a matrix via the robot
         p = models.PlannerPose(
             position=models.Vector3d(
@@ -238,37 +248,147 @@ class RobotVisualizer:
 
             self.logged_meshes.add(entity_path)
 
+    def init_collision_geometry(
+        self, entity_path: str, collider: models.Collider, pose: models.PlannerPose
+    ):
+        if entity_path in self.logged_meshes:
+            return
+
+        if collider.shape.actual_instance.shape_type == "sphere":
+            rr.log(
+                f"{entity_path}",
+                rr.Ellipsoids3D(
+                    radii=[
+                        collider.shape.actual_instance.radius,
+                        collider.shape.actual_instance.radius,
+                        collider.shape.actual_instance.radius,
+                    ],
+                    centers=[[pose.position.x, pose.position.y, pose.position.z]],
+                    colors=[(221, 193, 193, 255)],
+                ),
+                timeless=True,
+            )
+
+        elif collider.shape.actual_instance.shape_type == "box":
+            rr.log(
+                f"{entity_path}",
+                rr.Boxes3D(
+                    centers=[[pose.position.x, pose.position.y, pose.position.z]],
+                    half_sizes=[
+                        collider.shape.actual_instance.size_x,
+                        collider.shape.actual_instance.size_y,
+                        collider.shape.actual_instance.size_z,
+                    ],
+                    colors=[(221, 193, 193, 255)],
+                ),
+                timeless=True,
+            )
+
+        elif collider.shape.actual_instance.shape_type == "capsule":
+            height = collider.shape.actual_instance.cylinder_height
+            radius = collider.shape.actual_instance.radius
+
+            # Generate trimesh capsule
+            capsule = trimesh.creation.capsule(height=height, radius=radius, count=[6, 8])
+
+            # Extract vertices and faces for solid visualization
+            vertices = np.array(capsule.vertices)
+
+            # Transform vertices to world position
+            transform = np.eye(4)
+            transform[:3, 3] = [pose.position.x, pose.position.y, pose.position.z - height / 2]
+            rot_mat = Rotation.from_quat(
+                [
+                    collider.pose.orientation.x,
+                    collider.pose.orientation.y,
+                    collider.pose.orientation.z,
+                    collider.pose.orientation.w,
+                ]
+            )
+            transform[:3, :3] = rot_mat.as_matrix()
+
+            vertices = np.array([transform @ np.append(v, 1) for v in vertices])[:, :3]
+
+            polygons = HullVisualizer.compute_hull_outlines_from_points(vertices)
+
+            if polygons:
+                line_segments = [p.tolist() for p in polygons]
+                rr.log(
+                    f"{entity_path}",
+                    rr.LineStrips3D(
+                        line_segments,
+                        radii=rr.Radius.ui_points(0.75),
+                        colors=[[221, 193, 193, 255]],
+                    ),
+                    static=True,
+                    timeless=True,
+                )
+
+        elif collider.shape.actual_instance.shape_type == "convex_hull":
+            polygons = HullVisualizer.compute_hull_outlines_from_points(
+                collider.shape.actual_instance.vertices
+            )
+
+            if polygons:
+                line_segments = [p.tolist() for p in polygons]
+                rr.log(
+                    f"{entity_path}",
+                    rr.LineStrips3D(
+                        line_segments, radii=rr.Radius.ui_points(1.5), colors=[colors.colors[2]]
+                    ),
+                    static=True,
+                    timeless=True,
+                )
+
+                vertices, triangles, normals = HullVisualizer.compute_hull_mesh(polygons)
+
+                rr.log(
+                    f"{entity_path}",
+                    rr.Mesh3D(
+                        vertex_positions=vertices,
+                        triangle_indices=triangles,
+                        vertex_normals=normals,
+                        albedo_factor=[colors.colors[0]],
+                    ),
+                    static=True,
+                    timeless=True,
+                )
+
+        self.logged_meshes.add(entity_path)
+
     def init_geometry(self, entity_path: str, capsule):
         """Generic method to log a single geometry, either capsule or box."""
 
-        if entity_path not in self.logged_meshes:
-            if capsule:
-                radius = capsule.radius
-                height = capsule.cylinder_height
+        if entity_path in self.logged_meshes:
+            return
 
-                # Slightly shrink the capsule if static to reduce z-fighting
-                if self.static_transform:
-                    radius *= 0.99
-                    height *= 0.99
+        if capsule:
+            radius = capsule.radius
+            height = capsule.cylinder_height
 
-                # Create capsule and retrieve normals
-                cap_mesh = trimesh.creation.capsule(radius=radius, height=height)
-                vertex_normals = cap_mesh.vertex_normals.tolist()
+            # Slightly shrink the capsule if static to reduce z-fighting
+            if self.static_transform:
+                radius *= 0.99
+                height *= 0.99
 
-                rr.log(
-                    entity_path,
-                    rr.Mesh3D(
-                        vertex_positions=cap_mesh.vertices.tolist(),
-                        triangle_indices=cap_mesh.faces.tolist(),
-                        vertex_normals=vertex_normals,
-                        albedo_factor=self.albedo_factor,
-                    ),
-                )
-                self.logged_meshes.add(entity_path)
-            else:
-                # fallback to a box
-                rr.log(entity_path, rr.Boxes3D(half_sizes=[[50, 50, 50]]))
-                self.logged_meshes.add(entity_path)
+            # Create capsule and retrieve normals
+            cap_mesh = trimesh.creation.capsule(radius=radius, height=height)
+            vertex_normals = cap_mesh.vertex_normals.tolist()
+
+            rr.log(
+                entity_path,
+                rr.Mesh3D(
+                    vertex_positions=cap_mesh.vertices.tolist(),
+                    triangle_indices=cap_mesh.faces.tolist(),
+                    vertex_normals=vertex_normals,
+                    albedo_factor=self.albedo_factor,
+                ),
+            )
+            self.logged_meshes.add(entity_path)
+        else:
+            # fallback to a box
+            rr.log(entity_path, rr.Boxes3D(half_sizes=[[50, 50, 50]]))
+            self.logged_meshes.add(entity_path)
 
     def log_robot_geometry(self, joint_position):
         transforms = self.compute_forward_kinematics(joint_position)
@@ -442,6 +562,32 @@ class RobotVisualizer:
                     entity_path = f"{self.base_entity_path}/safety_from_controller/tcp/geometry_{i}"
                     final_transform = tcp_transform @ self.geometry_pose_to_matrix(geom.init_pose)
                     self.init_geometry(entity_path, geom.capsule)
+                    collect_geometry_data(entity_path, final_transform)
+
+            # Collect data for collision link geometries
+            for link_index, geometries in enumerate(self.collision_link_geometries):
+                link_transform = transforms[link_index]
+                for i, geom_id in enumerate(geometries):
+                    entity_path = f"{self.base_entity_path}/collision/links/link_{link_index}/geometry_{geom_id}"
+
+                    pose = normalize_pose(geometries[geom_id].pose)
+
+                    final_transform = link_transform @ self.geometry_pose_to_matrix(pose)
+                    self.init_collision_geometry(entity_path, geometries[geom_id], pose)
+                    collect_geometry_data(entity_path, final_transform)
+
+            # Collect data for collision TCP geometries
+            if self.collision_tcp_geometries:
+                tcp_transform = transforms[-1]  # End-effector transform
+                for i, geom_id in enumerate(self.collision_tcp_geometries):
+                    entity_path = f"{self.base_entity_path}/collision/tcp/geometry_{geom_id}"
+
+                    pose = normalize_pose(self.collision_tcp_geometries[geom_id].pose)
+
+                    final_transform = tcp_transform @ self.geometry_pose_to_matrix(pose)
+                    self.init_collision_geometry(
+                        entity_path, self.collision_tcp_geometries[geom_id], pose
+                    )
                     collect_geometry_data(entity_path, final_transform)
 
         # Send collected columns for all geometries

@@ -1,5 +1,5 @@
 import asyncio
-from typing import Dict, List
+from typing import Any, Dict, List, Tuple
 
 import numpy as np
 import rerun as rr
@@ -9,9 +9,10 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 from nova import Nova
 from nova.api import models
-from scipy.spatial.transform import Rotation as R
+from scipy.spatial.transform import Rotation
 
 from nova_rerun_bridge import colors
+from nova_rerun_bridge.conversion_helpers import normalize_pose
 from nova_rerun_bridge.dh_robot import DHRobot
 from nova_rerun_bridge.hull_visualizer import HullVisualizer
 from nova_rerun_bridge.motion_storage import load_processed_motions, save_processed_motion
@@ -390,7 +391,7 @@ def log_tcp_pose(trajectory: List[models.TrajectorySample], times_column):
             point.tcp_pose.orientation.y,
             point.tcp_pose.orientation.z,
         ]
-        rotation = R.from_rotvec(rotation_vector)
+        rotation = Rotation.from_rotvec(rotation_vector)
         angle = rotation.magnitude()
         axis_angle = rotation.as_rotvec() / angle if angle != 0 else [0, 0, 0]
         tcp_rotations.append(rr.RotationAxisAngle(axis=axis_angle, angle=angle))
@@ -490,49 +491,7 @@ def log_collision_scenes(collision_scenes: Dict[str, models.CollisionScene]):
 
 def log_colliders_once(entity_path: str, colliders: Dict[str, models.Collider]):
     for collider_id, collider in colliders.items():
-        # Default components
-        default_position = models.Vector3d(x=0.0, y=0.0, z=0.0)
-        default_orientation = models.Vector3d(x=0.0, y=0.0, z=0.0)
-
-        # Check pose and its components
-        pose = (
-            collider.pose
-            if collider.pose is not None
-            else models.Pose(position=default_position, orientation=default_orientation)
-        )
-
-        # Handle position - convert list to Vector3d if needed
-        if isinstance(pose.position, list):
-            position = models.Vector3d(
-                x=float(pose.position[0]), y=float(pose.position[1]), z=float(pose.position[2])
-            )
-        else:
-            position = (
-                pose.position
-                if hasattr(pose, "position") and pose.position is not None
-                else default_position
-            )
-
-        # Handle orientation - convert list to Vector3d if needed
-        if isinstance(pose.orientation, list):
-            orientation = models.Vector3d(
-                x=float(pose.orientation[0]),
-                y=float(pose.orientation[1]),
-                z=float(pose.orientation[2]),
-            )
-        else:
-            orientation = (
-                pose.orientation
-                if hasattr(pose, "orientation") and pose.orientation is not None
-                else default_orientation
-            )
-
-        pose = models.Pose(position=position, orientation=orientation)
-
-        # rotation_vector = [pose.orientation.x, pose.orientation.y, pose.orientation.z]
-        # rotation = R.from_rotvec(rotation_vector)
-        # angle = rotation.magnitude() if rotation.magnitude() != 0 else 0.0
-        # axis_angle = rotation.as_rotvec() / angle if angle != 0 else [1, 0, 0]
+        pose = normalize_pose(collider.pose)
 
         if collider.shape.actual_instance.shape_type == "sphere":
             rr.log(
@@ -577,7 +536,7 @@ def log_colliders_once(entity_path: str, colliders: Dict[str, models.Collider]):
             # Transform vertices to world position
             transform = np.eye(4)
             transform[:3, 3] = [pose.position.x, pose.position.y, pose.position.z - height / 2]
-            rot_mat = R.from_rotvec(
+            rot_mat = Rotation.from_rotvec(
                 np.array([pose.orientation.x, pose.orientation.y, pose.orientation.z])
             )
             transform[:3, :3] = rot_mat.as_matrix()
@@ -673,11 +632,28 @@ def process_trajectory(
     log_scalar_values(trajectory, times_column, optimizer_config)
 
 
+def extract_link_chain_and_tcp(collision_scenes: dict) -> Tuple[List[Any], List[Any]]:
+    """Extract link chain and TCP from collision scenes."""
+    # Get first scene (name can vary)
+    scene = next(iter(collision_scenes.values()), None)
+    if not scene:
+        return [], []
+
+    # Try to get motion groups
+    motion_group = next(iter(scene.motion_groups.values()), None)
+    if not motion_group:
+        return [], []
+
+    return (getattr(motion_group, "link_chain", []), getattr(motion_group, "tool", []))
+
+
 async def fetch_and_process_motion(
-    motion_id,
-    model_from_controller,
+    motion_id: str,
+    model_from_controller: str,
+    motion_group: str,
     optimizer_config: models.OptimizerSetup,
     trajectory: List[models.TrajectorySample],
+    collision_scenes: Dict[str, models.CollisionScene],
 ):
     """
     Fetch and process a single motion if not processed already.
@@ -685,13 +661,18 @@ async def fetch_and_process_motion(
 
     # Initialize DHRobot and Visualizer
     robot = DHRobot(optimizer_config.dh_parameters, optimizer_config.mounting)
+
+    collision_link_chain, collision_tcp = extract_link_chain_and_tcp(collision_scenes)
+
     visualizer = RobotVisualizer(
         robot=robot,
         robot_model_geometries=optimizer_config.safety_setup.robot_model_geometries,
         tcp_geometries=optimizer_config.safety_setup.tcp_geometries,
         static_transform=False,
-        base_entity_path="motion",
+        base_entity_path=f"motion/{motion_group}",
         glb_path=f"models/{model_from_controller}.glb",
+        collision_link_chain=collision_link_chain,
+        collision_tcp=collision_tcp,
     )
 
     # Calculate time offset
@@ -796,8 +777,10 @@ async def process_motions():
                 await fetch_and_process_motion(
                     motion_id=motion_id,
                     model_from_controller=motion_motion_group.model_from_controller,
+                    motion_group=motion.motion_group,
                     optimizer_config=optimizer_config,
                     trajectory=trajectory.trajectory,
+                    collision_scenes=collision_scenes,
                 )
 
     except Exception as e:
