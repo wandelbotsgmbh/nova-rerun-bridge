@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.3.0 (2025-01-17)
+
+### Features
+
+- Add log collision scene
+  ([`3d555e6`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/3d555e6b73dfbde1f28283da6b67394549eeb351))
+
+
 ## v0.2.0 (2025-01-17)
 
 ### Features
