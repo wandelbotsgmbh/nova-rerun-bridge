@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Any, Dict, List, Tuple
 
 import numpy as np
 import rerun as rr
@@ -116,3 +116,18 @@ def log_colliders_once(entity_path: str, colliders: Dict[str, models.Collider]):
                     static=True,
                     timeless=True,
                 )
+
+
+def extract_link_chain_and_tcp(collision_scenes: dict) -> Tuple[List[Any], List[Any]]:
+    """Extract link chain and TCP from collision scenes."""
+    # Get first scene (name can vary)
+    scene = next(iter(collision_scenes.values()), None)
+    if not scene:
+        return [], []
+
+    # Try to get motion groups
+    motion_group = next(iter(scene.motion_groups.values()), None)
+    if not motion_group:
+        return [], []
+
+    return (getattr(motion_group, "link_chain", []), getattr(motion_group, "tool", []))

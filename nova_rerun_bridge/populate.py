@@ -1,5 +1,5 @@
 import asyncio
-from typing import Any, Dict, List, Tuple
+from typing import Dict, List
 
 import numpy as np
 import rerun as rr
@@ -9,6 +9,7 @@ from nova import Nova
 from nova.api import models
 from scipy.spatial.transform import Rotation
 
+from nova_rerun_bridge.collision_scene import extract_link_chain_and_tcp
 from nova_rerun_bridge.consts import RECORDING_INTERVAL, SCHEDULE_INTERVAL, TIME_INTERVAL_NAME
 from nova_rerun_bridge.dh_robot import DHRobot
 from nova_rerun_bridge.motion_storage import load_processed_motions, save_processed_motion
@@ -241,21 +242,6 @@ def process_trajectory(
     log_scalar_values(trajectory, times_column, optimizer_config)
 
 
-def extract_link_chain_and_tcp(collision_scenes: dict) -> Tuple[List[Any], List[Any]]:
-    """Extract link chain and TCP from collision scenes."""
-    # Get first scene (name can vary)
-    scene = next(iter(collision_scenes.values()), None)
-    if not scene:
-        return [], []
-
-    # Try to get motion groups
-    motion_group = next(iter(scene.motion_groups.values()), None)
-    if not motion_group:
-        return [], []
-
-    return (getattr(motion_group, "link_chain", []), getattr(motion_group, "tool", []))
-
-
 async def fetch_and_process_motion(
     motion_id: str,
     model_from_controller: str,
@@ -321,7 +307,6 @@ async def process_motions():
     motion_group_infos_api = nova._api_client.motion_group_infos_api
     motion_api = nova._api_client.motion_api
     motion_group_api = nova._api_client.motion_group_api
-    store_collision_scenes_api = nova._api_client.store_collision_scenes_api
 
     try:
         motions = await motion_api.list_motions("cell")
@@ -346,9 +331,6 @@ async def process_motions():
 
             for motion_id in new_motions:
                 print(f"Processing motion {motion_id}.", flush=True)
-                collision_scenes = await store_collision_scenes_api.list_stored_collision_scenes(
-                    "cell"
-                )
                 await nova_bridge.log_collision_scenes()
 
                 # Fetch motion details
