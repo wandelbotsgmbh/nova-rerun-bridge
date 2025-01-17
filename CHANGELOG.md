@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.4.0 (2025-01-17)
+
+### Features
+
+- Expose main api class
+  ([`c0d4698`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/c0d4698854c0cb7e0c19bf326f41afe5e5221764))
+
+
 ## v0.3.0 (2025-01-17)
 
 ### Features
