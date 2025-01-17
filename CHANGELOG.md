@@ -1,6 +1,19 @@
 # CHANGELOG
 
 
+## v0.1.0 (2025-01-17)
+
+### Features
+
+* feat: show collision motion group ([`02bd9c3`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/02bd9c3818d24732c53785d5677f79b679bc4294))
+
+### Unknown
+
+* Merge pull request #4 from wandelbotsgmbh/feature/show-collision-motion-group
+
+feat: show collision motion group ([`9a80774`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/9a807748c5eabd72b6bbdd011f6484351181c4fe))
+
+
 ## v0.0.0 (2025-01-16)
 
 ### Unknown
