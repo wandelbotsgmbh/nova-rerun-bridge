@@ -6,8 +6,7 @@ from nova_rerun_bridge import NovaRerunBridge
 
 
 async def test():
-    nova = Nova()
-    async with NovaRerunBridge(nova) as nova_bridge:
+    async with Nova() as nova, NovaRerunBridge(nova) as nova_bridge:
         await nova_bridge.setup_blueprint()
         await nova_bridge.fetch_and_log_collision_scenes()
 
