@@ -1,6 +1,7 @@
 from typing import Dict
 
 import rerun as rr
+from nova import MotionGroup
 from nova.api import models
 from nova.core.nova import Nova
 
@@ -44,7 +45,9 @@ class NovaRerunBridge:
 
         Fetches motion groups from Nova and configures visualization layout.
         """
-        motion_groups = await self.nova._api_client.motion_group_api.list_motion_groups("cell")
+        motion_groups = await self.nova._api_client.motion_group_api.list_motion_groups(
+            self.nova.cell()._cell_id
+        )
         motion_group_list = [
             active_motion_group.motion_group for active_motion_group in motion_groups.instances
         ]
@@ -88,17 +91,21 @@ class NovaRerunBridge:
 
     async def log_motion(self, motion_id: str, time_offset: float = 0) -> None:
         # Fetch motion details from api
-        motion = await self.nova._api_client.motion_api.get_planned_motion("cell", motion_id)
+        motion = await self.nova._api_client.motion_api.get_planned_motion(
+            self.nova.cell()._cell_id, motion_id
+        )
         optimizer_config = (
             await self.nova._api_client.motion_group_infos_api.get_optimizer_configuration(
-                "cell", motion.motion_group
+                self.nova.cell()._cell_id, motion.motion_group
             )
         )
         trajectory = await self.nova._api_client.motion_api.get_motion_trajectory(
-            "cell", motion_id, int(RECORDING_INTERVAL * 1000)
+            self.nova.cell()._cell_id, motion_id, int(RECORDING_INTERVAL * 1000)
         )
 
-        motion_groups = await self.nova._api_client.motion_group_api.list_motion_groups("cell")
+        motion_groups = await self.nova._api_client.motion_group_api.list_motion_groups(
+            self.nova.cell()._cell_id
+        )
         motion_motion_group = next(
             (mg for mg in motion_groups.instances if mg.motion_group == motion.motion_group), None
         )
@@ -118,6 +125,16 @@ class NovaRerunBridge:
             collision_scenes=collision_scenes,
             time_offset=time_offset,
         )
+
+    async def log_trajectory(
+        self,
+        joint_trajectory: models.JointTrajectory,
+        tcp: str,
+        motion_group: MotionGroup,
+        time_offset: float = 0,
+    ) -> None:
+        load_plan_response = await motion_group._load_planned_motion(joint_trajectory, tcp)
+        await self.log_motion(load_plan_response.motion, time_offset=time_offset)
 
     async def __aenter__(self) -> "NovaRerunBridge":
         """Context manager entry point.
