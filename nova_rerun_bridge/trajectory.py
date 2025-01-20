@@ -1,13 +1,56 @@
-from typing import List
+from typing import Dict, List
 
 import numpy as np
 import rerun as rr
 from nova.api import models
 from scipy.spatial.transform import Rotation
 
+from nova_rerun_bridge.collision_scene import extract_link_chain_and_tcp
 from nova_rerun_bridge.consts import TIME_INTERVAL_NAME
 from nova_rerun_bridge.dh_robot import DHRobot
 from nova_rerun_bridge.robot_visualizer import RobotVisualizer
+
+
+def log_motion(
+    motion_id: str,
+    model_from_controller: str,
+    motion_group: str,
+    optimizer_config: models.OptimizerSetup,
+    trajectory: List[models.TrajectorySample],
+    collision_scenes: Dict[str, models.CollisionScene],
+    time_offset: float = 0,
+):
+    """
+    Fetch and process a single motion if not processed already.
+    """
+
+    # Initialize DHRobot and Visualizer
+    robot = DHRobot(optimizer_config.dh_parameters, optimizer_config.mounting)
+
+    collision_link_chain, collision_tcp = extract_link_chain_and_tcp(collision_scenes)
+
+    visualizer = RobotVisualizer(
+        robot=robot,
+        robot_model_geometries=optimizer_config.safety_setup.robot_model_geometries,
+        tcp_geometries=optimizer_config.safety_setup.tcp_geometries,
+        static_transform=False,
+        base_entity_path=f"motion/{motion_group}",
+        glb_path=f"models/{model_from_controller}.glb",
+        collision_link_chain=collision_link_chain,
+        collision_tcp=collision_tcp,
+    )
+
+    rr.set_time_seconds(TIME_INTERVAL_NAME, time_offset)
+
+    # Process trajectory points
+    log_trajectory(
+        motion_id=motion_id,
+        robot=robot,
+        visualizer=visualizer,
+        trajectory=trajectory,
+        optimizer_config=optimizer_config,
+        timer_offset=time_offset,
+    )
 
 
 def log_trajectory_path(motion_id: str, trajectory: List[models.TrajectorySample]):

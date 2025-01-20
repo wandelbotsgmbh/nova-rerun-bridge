@@ -6,6 +6,8 @@ from nova.core.nova import Nova
 
 from nova_rerun_bridge.blueprint import send_blueprint
 from nova_rerun_bridge.collision_scene import log_collision_scenes
+from nova_rerun_bridge.consts import RECORDING_INTERVAL
+from nova_rerun_bridge.trajectory import log_motion
 
 
 class NovaRerunBridge:
@@ -83,6 +85,39 @@ class NovaRerunBridge:
 
     def log_collision_scene(self, collision_scenes: Dict[str, models.CollisionScene]) -> None:
         log_collision_scenes(collision_scenes=collision_scenes)
+
+    async def log_motion(self, motion_id: str, time_offset: float = 0) -> None:
+        # Fetch motion details from api
+        motion = await self.nova._api_client.motion_api.get_planned_motion("cell", motion_id)
+        optimizer_config = (
+            await self.nova._api_client.motion_group_infos_api.get_optimizer_configuration(
+                "cell", motion.motion_group
+            )
+        )
+        trajectory = await self.nova._api_client.motion_api.get_motion_trajectory(
+            "cell", motion_id, int(RECORDING_INTERVAL * 1000)
+        )
+
+        motion_groups = await self.nova._api_client.motion_group_api.list_motion_groups("cell")
+        motion_motion_group = next(
+            (mg for mg in motion_groups.instances if mg.motion_group == motion.motion_group), None
+        )
+
+        collision_scenes = (
+            await self.nova._api_client.store_collision_scenes_api.list_stored_collision_scenes(
+                cell=self.nova.cell()._cell_id
+            )
+        )
+
+        log_motion(
+            motion_id=motion_id,
+            model_from_controller=motion_motion_group.model_from_controller,
+            motion_group=motion.motion_group,
+            optimizer_config=optimizer_config,
+            trajectory=trajectory.trajectory,
+            collision_scenes=collision_scenes,
+            time_offset=time_offset,
+        )
 
     async def __aenter__(self) -> "NovaRerunBridge":
         """Context manager entry point.
