@@ -291,3 +291,14 @@ def log_scalar_values(
                 times=[times_column],
                 components=[rr.components.ScalarBatch(values)],
             )
+
+
+def to_trajectory_samples(self) -> List[models.TrajectorySample]:
+    """Convert JointTrajectory to list of TrajectorySample objects."""
+    samples = []
+    for joint_pos, time, location in zip(self.joint_positions, self.times, self.locations):
+        sample = models.TrajectorySample(
+            joint_position=joint_pos, time=time, location_on_trajectory=location
+        )
+        samples.append(sample)
+    return samples
