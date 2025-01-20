@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.5.0 (2025-01-20)
+
+### Features
+
+- Log trajectory from nova
+  ([`859069e`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/859069e4023abb29a5740210750ba3869633dc2a))
+
+
 ## v0.4.0 (2025-01-17)
 
 ### Features
