@@ -4,6 +4,7 @@ from nova import Controller, Nova
 from nova.actions import jnt, ptp
 
 from nova_rerun_bridge import NovaRerunBridge
+from nova_rerun_bridge.trajectory import TimingMode
 
 """
 Example: Move multiple robots simultaneously.
@@ -24,7 +25,7 @@ async def move_robot(controller: Controller, nova_bridge: NovaRerunBridge):
         actions = [jnt(home_joints), ptp(target_pose), jnt(home_joints)]
 
         trajectory = await motion_group.plan(actions, tcp)
-        await nova_bridge.log_trajectory(trajectory, tcp, motion_group, time_offset=0)
+        await nova_bridge.log_trajectory(trajectory, tcp, motion_group, timing_mode=TimingMode.SYNC)
 
         await motion_group.plan_and_execute(actions, tcp)
 

@@ -1,3 +1,4 @@
+from enum import Enum, auto
 from typing import Dict, List
 
 import numpy as np
@@ -11,6 +12,18 @@ from nova_rerun_bridge.dh_robot import DHRobot
 from nova_rerun_bridge.robot_visualizer import RobotVisualizer
 
 
+class TimingMode(Enum):
+    """Controls how trajectories are timed relative to each other."""
+
+    RESET = auto()  # Start at time_offset
+    CONTINUE = auto()  # Start after last trajectory
+    SYNC = auto()  # Use exact time_offset provided
+
+
+# Global variable to track last logged time
+_last_logged_time = 0.0
+
+
 def log_motion(
     motion_id: str,
     model_from_controller: str,
@@ -19,10 +32,28 @@ def log_motion(
     trajectory: List[models.TrajectorySample],
     collision_scenes: Dict[str, models.CollisionScene],
     time_offset: float = 0,
+    timing_mode: TimingMode = TimingMode.RESET,
 ):
     """
-    Fetch and process a single motion if not processed already.
+    Fetch and process a single motion with timing control.
+
+    Args:
+        ...existing args...
+        timing_mode: Controls how trajectory timing is handled
+            RESET: Start at time_offset (default)
+            CONTINUE: Start after last trajectory
+            SYNC: Use exact time_offset provided
     """
+    global _last_logged_time
+
+    # Calculate start time based on timing mode
+    if timing_mode == TimingMode.CONTINUE:
+        effective_offset = _last_logged_time
+    elif timing_mode == TimingMode.SYNC:
+        effective_offset = time_offset
+    else:  # TimingMode.RESET
+        effective_offset = time_offset
+        _last_logged_time = 0.0
 
     # Initialize DHRobot and Visualizer
     robot = DHRobot(optimizer_config.dh_parameters, optimizer_config.mounting)
@@ -40,7 +71,7 @@ def log_motion(
         collision_tcp=collision_tcp,
     )
 
-    rr.set_time_seconds(TIME_INTERVAL_NAME, time_offset)
+    rr.set_time_seconds(TIME_INTERVAL_NAME, effective_offset)
 
     # Process trajectory points
     log_trajectory(
@@ -50,8 +81,12 @@ def log_motion(
         visualizer=visualizer,
         trajectory=trajectory,
         optimizer_config=optimizer_config,
-        timer_offset=time_offset,
+        timer_offset=effective_offset,
     )
+
+    # Update last logged time
+    if trajectory:
+        _last_logged_time = effective_offset + trajectory[-1].time
 
 
 def log_trajectory_path(

@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Dict
 
 import rerun as rr
@@ -9,7 +10,7 @@ from nova.core.nova import Nova
 from nova_rerun_bridge.blueprint import send_blueprint
 from nova_rerun_bridge.collision_scene import log_collision_scenes
 from nova_rerun_bridge.consts import RECORDING_INTERVAL
-from nova_rerun_bridge.trajectory import log_motion
+from nova_rerun_bridge.trajectory import TimingMode, log_motion
 
 
 class NovaRerunBridge:
@@ -39,7 +40,8 @@ class NovaRerunBridge:
     def __init__(self, nova: Nova, spawn: bool = True) -> None:
         self.nova = nova
         if spawn:
-            rr.init(application_id="nova", recording_id="nova_live", spawn=True)
+            recording_id = f"nova_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+            rr.init(application_id="nova", recording_id=recording_id, spawn=True)
         logger.add(sink=rr.LoggingHandler("logs/handler"))
 
     async def setup_blueprint(self) -> None:
@@ -98,7 +100,9 @@ class NovaRerunBridge:
     def log_collision_scene(self, collision_scenes: Dict[str, models.CollisionScene]) -> None:
         log_collision_scenes(collision_scenes=collision_scenes)
 
-    async def log_motion(self, motion_id: str, time_offset: float = 0) -> None:
+    async def log_motion(
+        self, motion_id: str, timing_mode=TimingMode.CONTINUE, time_offset: float = 0
+    ) -> None:
         # Fetch motion details from api
         motion = await self.nova._api_client.motion_api.get_planned_motion(
             self.nova.cell()._cell_id, motion_id
@@ -133,6 +137,7 @@ class NovaRerunBridge:
             trajectory=trajectory.trajectory,
             collision_scenes=collision_scenes,
             time_offset=time_offset,
+            timing_mode=timing_mode,
         )
 
     async def log_trajectory(
@@ -140,10 +145,13 @@ class NovaRerunBridge:
         joint_trajectory: models.JointTrajectory,
         tcp: str,
         motion_group: MotionGroup,
+        timing_mode=TimingMode.CONTINUE,
         time_offset: float = 0,
     ) -> None:
         load_plan_response = await motion_group._load_planned_motion(joint_trajectory, tcp)
-        await self.log_motion(load_plan_response.motion, time_offset=time_offset)
+        await self.log_motion(
+            load_plan_response.motion, timing_mode=timing_mode, time_offset=time_offset
+        )
 
     async def __aenter__(self) -> "NovaRerunBridge":
         """Context manager entry point.
