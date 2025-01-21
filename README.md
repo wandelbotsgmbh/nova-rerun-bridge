@@ -17,8 +17,9 @@ poetry install nova-rerun-bridge
 
 # Download required robot models
 poetry run download-models
+```
 
-´´´python
+```python
 from nova_rerun_bridge import NovaRerunBridge
 from nova import Nova
 
