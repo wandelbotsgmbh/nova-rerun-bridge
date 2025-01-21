@@ -1,6 +1,7 @@
 from typing import Dict
 
 import rerun as rr
+from loguru import logger
 from nova import MotionGroup
 from nova.api import models
 from nova.core.nova import Nova
@@ -39,6 +40,7 @@ class NovaRerunBridge:
         self.nova = nova
         if spawn:
             rr.init(application_id="nova", recording_id="nova_live", spawn=True)
+        logger.add(sink=rr.LoggingHandler("logs/handler"))
 
     async def setup_blueprint(self) -> None:
         """Configure and send blueprint configuration to Rerun.
