@@ -5,13 +5,13 @@ from nova_rerun_bridge import colors
 from nova_rerun_bridge.consts import TIME_INTERVAL_NAME
 
 
-def configure_joint_line_colors():
+def configure_joint_line_colors(motion_group: str):
     """
     Log the visualization lines for joint limit boundaries.
     """
 
     for i in range(1, 7):
-        prefix = "motion/joint"
+        prefix = f"motion/{motion_group}/joint"
         color = colors.colors[i - 1]
 
         rr.log(
@@ -54,7 +54,7 @@ def configure_joint_line_colors():
         )
 
     for i in range(1, 7):
-        prefix = "motion/joint"
+        prefix = f"motion/{motion_group}/joint"
         color = colors.colors[i - 1]
 
         rr.log(
@@ -97,7 +97,7 @@ def configure_joint_line_colors():
         )
 
 
-def configure_tcp_line_colors():
+def configure_tcp_line_colors(motion_group: str):
     """
     Configure time series lines for motion data.
     """
@@ -116,30 +116,34 @@ def configure_tcp_line_colors():
         ("tcp_orientation_velocity_limit", [176, 49, 40], 4),
     ]
     for name, color, width in series_specs:
-        rr.log(f"motion/{name}", rr.SeriesLine(color=color, name=name, width=width), timeless=True)
+        rr.log(
+            f"motion/{motion_group}/{name}",
+            rr.SeriesLine(color=color, name=name, width=width),
+            timeless=True,
+        )
 
 
-def joint_content_lists():
+def joint_content_lists(motion_group: str):
     """
     Generate content lists for joint-related time series.
     """
-    velocity_contents = [f"motion/joint_velocity_{i}" for i in range(1, 7)]
-    velocity_limits = [f"motion/joint_velocity_lower_limit_{i}" for i in range(1, 7)] + [
-        f"motion/joint_velocity_upper_limit_{i}" for i in range(1, 7)
+    velocity_contents = [f"motion/{motion_group}/joint_velocity_{i}" for i in range(1, 7)]
+    velocity_limits = [
+        f"motion/{motion_group}/joint_velocity_lower_limit_{i}" for i in range(1, 7)
+    ] + [f"motion/{motion_group}/joint_velocity_upper_limit_{i}" for i in range(1, 7)]
+
+    accel_contents = [f"motion/{motion_group}/joint_acceleration_{i}" for i in range(1, 7)]
+    accel_limits = [
+        f"motion/{motion_group}/joint_acceleration_lower_limit_{i}" for i in range(1, 7)
+    ] + [f"motion/{motion_group}/joint_acceleration_upper_limit_{i}" for i in range(1, 7)]
+
+    pos_contents = [f"motion/{motion_group}/joint_position_{i}" for i in range(1, 7)]
+    pos_limits = [f"motion/{motion_group}/joint_position_lower_limit_{i}" for i in range(1, 7)] + [
+        f"motion/{motion_group}/joint_position_upper_limit_{i}" for i in range(1, 7)
     ]
 
-    accel_contents = [f"motion/joint_acceleration_{i}" for i in range(1, 7)]
-    accel_limits = [f"motion/joint_acceleration_lower_limit_{i}" for i in range(1, 7)] + [
-        f"motion/joint_acceleration_upper_limit_{i}" for i in range(1, 7)
-    ]
-
-    pos_contents = [f"motion/joint_position_{i}" for i in range(1, 7)]
-    pos_limits = [f"motion/joint_position_lower_limit_{i}" for i in range(1, 7)] + [
-        f"motion/joint_position_upper_limit_{i}" for i in range(1, 7)
-    ]
-
-    torque_contents = [f"motion/joint_torque_{i}" for i in range(1, 7)]
-    torque_limits = [f"motion/joint_torque_limit_{i}" for i in range(1, 7)]
+    torque_contents = [f"motion/{motion_group}/joint_torque_{i}" for i in range(1, 7)]
+    torque_limits = [f"motion/{motion_group}/joint_torque_limit_{i}" for i in range(1, 7)]
 
     return (
         velocity_contents,
@@ -160,6 +164,7 @@ def get_default_blueprint(motion_group_list: list):
 
     # Contents for the Spatial3DView
     contents = ["motion/**", "collision_scenes/**"] + [f"{group}/**" for group in motion_group_list]
+    first_motion_group = motion_group_list[0]
 
     time_ranges = rrb.VisibleTimeRange(
         TIME_INTERVAL_NAME,
@@ -177,7 +182,7 @@ def get_default_blueprint(motion_group_list: list):
         pos_limits,
         torque_contents,
         torque_limits,
-    ) = joint_content_lists()
+    ) = joint_content_lists(first_motion_group)
 
     return rrb.Blueprint(
         rrb.Horizontal(
@@ -185,16 +190,19 @@ def get_default_blueprint(motion_group_list: list):
             rrb.Tabs(
                 rrb.Vertical(
                     rrb.TimeSeriesView(
-                        contents=["motion/tcp_velocity/**", "motion/tcp_velocity_limit/**"],
+                        contents=[
+                            f"motion/{first_motion_group}/tcp_velocity/**",
+                            f"motion/{first_motion_group}/tcp_velocity_limit/**",
+                        ],
                         name="TCP velocity",
                         time_ranges=time_ranges,
                         plot_legend=plot_legend,
                     ),
                     rrb.TimeSeriesView(
                         contents=[
-                            "motion/tcp_acceleration/**",
-                            "motion/tcp_acceleration_lower_limit/**",
-                            "motion/tcp_acceleration_upper_limit/**",
+                            f"motion/{first_motion_group}/tcp_acceleration/**",
+                            f"motion/{first_motion_group}/tcp_acceleration_lower_limit/**",
+                            f"motion/{first_motion_group}/tcp_acceleration_upper_limit/**",
                         ],
                         name="TCP acceleration",
                         time_ranges=time_ranges,
@@ -202,8 +210,8 @@ def get_default_blueprint(motion_group_list: list):
                     ),
                     rrb.TimeSeriesView(
                         contents=[
-                            "motion/tcp_orientation_velocity/**",
-                            "motion/tcp_orientation_velocity_limit/**",
+                            f"motion/{first_motion_group}/tcp_orientation_velocity/**",
+                            f"motion/{first_motion_group}/tcp_orientation_velocity_limit/**",
                         ],
                         name="TCP orientation velocity",
                         time_ranges=time_ranges,
@@ -211,9 +219,9 @@ def get_default_blueprint(motion_group_list: list):
                     ),
                     rrb.TimeSeriesView(
                         contents=[
-                            "motion/tcp_orientation_acceleration/**",
-                            "motion/tcp_orientation_acceleration_lower_limit/**",
-                            "motion/tcp_orientation_acceleration_upper_limit/**",
+                            f"motion/{first_motion_group}/tcp_orientation_acceleration/**",
+                            f"motion/{first_motion_group}/tcp_orientation_acceleration_lower_limit/**",
+                            f"motion/{first_motion_group}/tcp_orientation_acceleration_upper_limit/**",
                         ],
                         name="TCP orientation acceleration",
                         time_ranges=time_ranges,
@@ -251,13 +259,13 @@ def get_default_blueprint(motion_group_list: list):
                     name="Joint quantities",
                 ),
                 rrb.TimeSeriesView(
-                    contents="motion/time",
+                    contents=f"motion/{first_motion_group}/time",
                     name="Time trajectory",
                     time_ranges=time_ranges,
                     plot_legend=plot_legend,
                 ),
                 rrb.TimeSeriesView(
-                    contents="motion/location_on_trajectory",
+                    contents=f"motion/{first_motion_group}/location_on_trajectory",
                     name="Location on trajectory",
                     time_ranges=time_ranges,
                     plot_legend=plot_legend,
@@ -274,7 +282,8 @@ def send_blueprint(motion_group_list: list):
     Configure logging blueprints for visualization.
     """
 
-    configure_tcp_line_colors()
-    configure_joint_line_colors()
+    for motion_group in motion_group_list:
+        configure_tcp_line_colors(motion_group)
+        configure_joint_line_colors(motion_group)
 
     rr.send_blueprint(get_default_blueprint(motion_group_list))

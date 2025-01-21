@@ -45,6 +45,7 @@ def log_motion(
     # Process trajectory points
     log_trajectory(
         motion_id=motion_id,
+        motion_group=motion_group,
         robot=robot,
         visualizer=visualizer,
         trajectory=trajectory,
@@ -53,13 +54,18 @@ def log_motion(
     )
 
 
-def log_trajectory_path(motion_id: str, trajectory: List[models.TrajectorySample]):
+def log_trajectory_path(
+    motion_id: str, trajectory: List[models.TrajectorySample], motion_group: str
+):
     points = [
         [p.tcp_pose.position.x, p.tcp_pose.position.y, p.tcp_pose.position.z] for p in trajectory
     ]
-    rr.log("motion/trajectory", rr.LineStrips3D([points], colors=[[1.0, 1.0, 1.0, 1.0]]))
+    rr.log(
+        f"motion/{motion_group}/trajectory",
+        rr.LineStrips3D([points], colors=[[1.0, 1.0, 1.0, 1.0]]),
+    )
 
-    rr.log("logs", rr.TextLog(f"{motion_id}", level=rr.TextLogLevel.INFO))
+    rr.log("logs", rr.TextLog(f"{motion_group}/{motion_id}", level=rr.TextLogLevel.INFO))
 
 
 def get_times_column(
@@ -72,6 +78,7 @@ def get_times_column(
 
 def log_trajectory(
     motion_id: str,
+    motion_group: str,
     robot: DHRobot,
     visualizer: RobotVisualizer,
     trajectory: List[models.TrajectorySample],
@@ -85,7 +92,7 @@ def log_trajectory(
 
     times_column = get_times_column(trajectory, timer_offset)
 
-    log_trajectory_path(motion_id, trajectory)
+    log_trajectory_path(motion_id, trajectory, motion_group)
 
     # Calculate and log joint positions
     line_segments_batch = []
@@ -94,7 +101,7 @@ def log_trajectory(
         line_segments_batch.append(joint_positions)
 
     rr.send_columns(
-        "motion/dh_parameters",
+        f"motion/{motion_group}/dh_parameters",
         times=[times_column],
         components=[
             rr.LineStrips3D.indicator(),
@@ -107,16 +114,16 @@ def log_trajectory(
     visualizer.log_robot_geometries(trajectory, times_column)
 
     # Log TCP pose/orientation
-    log_tcp_pose(trajectory, times_column)
+    log_tcp_pose(trajectory, motion_group, times_column)
 
     # Log joint data
-    log_joint_data(trajectory, times_column, optimizer_config)
+    log_joint_data(trajectory, motion_group, times_column, optimizer_config)
 
     # Log scalar data
-    log_scalar_values(trajectory, times_column, optimizer_config)
+    log_scalar_values(trajectory, motion_group, times_column, optimizer_config)
 
 
-def log_tcp_pose(trajectory: List[models.TrajectorySample], times_column):
+def log_tcp_pose(trajectory: List[models.TrajectorySample], motion_group, times_column):
     """
     Log TCP pose (position + orientation) data.
     """
@@ -142,7 +149,7 @@ def log_tcp_pose(trajectory: List[models.TrajectorySample], times_column):
         tcp_rotations.append(rr.RotationAxisAngle(axis=axis_angle, angle=angle))
 
     rr.send_columns(
-        "motion/tcp_position",
+        f"motion/{motion_group}/tcp_position",
         times=[times_column],
         components=[
             rr.Transform3D.indicator(),
@@ -153,7 +160,10 @@ def log_tcp_pose(trajectory: List[models.TrajectorySample], times_column):
 
 
 def log_joint_data(
-    trajectory: List[models.TrajectorySample], times_column, optimizer_config: models.OptimizerSetup
+    trajectory: List[models.TrajectorySample],
+    motion_group,
+    times_column,
+    optimizer_config: models.OptimizerSetup,
 ) -> None:
     """
     Log joint-related data (position, velocity, acceleration, torques) from a trajectory as columns.
@@ -212,14 +222,17 @@ def log_joint_data(
         for i in range(num_joints):
             if data[i]:
                 rr.send_columns(
-                    f"motion/joint_{data_type}_{i + 1}",
+                    f"motion/{motion_group}/joint_{data_type}_{i + 1}",
                     times=[times_column],
                     components=[rr.components.ScalarBatch(data[i])],
                 )
 
 
 def log_scalar_values(
-    trajectory: List[models.TrajectorySample], times_column, optimizer_config: models.OptimizerSetup
+    trajectory: List[models.TrajectorySample],
+    motion_group,
+    times_column,
+    optimizer_config: models.OptimizerSetup,
 ):
     """
     Log scalar values such as TCP velocity, acceleration, orientation velocity/acceleration, time, and location.
@@ -287,7 +300,7 @@ def log_scalar_values(
     for key, values in scalar_data.items():
         if values:
             rr.send_columns(
-                f"motion/{key}",
+                f"motion/{motion_group}/{key}",
                 times=[times_column],
                 components=[rr.components.ScalarBatch(values)],
             )
