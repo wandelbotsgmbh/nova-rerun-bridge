@@ -47,13 +47,20 @@ class NovaRerunBridge:
 
         Fetches motion groups from Nova and configures visualization layout.
         """
-        motion_groups = await self.nova._api_client.motion_group_api.list_motion_groups(
-            self.nova.cell()._cell_id
-        )
-        motion_group_list = [
-            active_motion_group.motion_group for active_motion_group in motion_groups.instances
-        ]
-        send_blueprint(motion_group_list)
+        cell = self.nova.cell()
+
+        controllers = await cell.controllers()
+        motion_groups = []
+
+        if not controllers:
+            logger.warning("No controllers found")
+            return
+
+        for controller in controllers:
+            async with controller[0] as motion_group:
+                motion_groups.append(motion_group.motion_group_id)
+
+        send_blueprint(motion_groups)
 
     async def fetch_and_log_collision_scenes(self) -> Dict[str, models.CollisionScene]:
         """Fetch and log all collision scenes from Nova to Rerun."""
