@@ -7,6 +7,8 @@
 Visualizes the state of your nova instance inside of [rerun.io](https://rerun.io). Rerun is a tool to quickly visualize time series data. [Instructions](https://rerun.io/docs/reference/viewer/overview) for navigation within the Rerun Viewer.
 This is intended to be used alongside the [nova python lib](https://github.com/wandelbotsgmbh/wandelbots-nova). You will need a running nova instance. Register on [wandelbots.com](https://www.wandelbots.com/) to get access.
 
+https://github.com/user-attachments/assets/ab527bc4-720a-41f2-9499-54d6ed027163
+
 ## 🚀 Quick Start
 
 ```bash
@@ -74,10 +76,6 @@ You can try out the [examples](https://github.com/wandelbotsgmbh/nova-rerun-brid
 The bridge can be configured through environment variables:
 
 - RECORDING_INTERVAL: Set visualization update interval (default: 0.1s)
-
-This project contains a python library (rerun-nova-bridge) to use the rerun bridge in your own project and an app setup which you can install on your nova instance.
-
-https://github.com/user-attachments/assets/ab527bc4-720a-41f2-9499-54d6ed027163
 
 ## Download Robot Models
 
