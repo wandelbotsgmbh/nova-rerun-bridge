@@ -2,7 +2,6 @@ import asyncio
 
 from nova import Controller, MotionSettings, Nova
 from nova.actions import jnt, ptp
-from nova.core.nova import Nova
 from nova.types import Pose
 
 from nova_rerun_bridge import NovaRerunBridge
