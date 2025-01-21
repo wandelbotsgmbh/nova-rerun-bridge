@@ -17,11 +17,13 @@ class TimingMode(Enum):
 
     RESET = auto()  # Start at time_offset
     CONTINUE = auto()  # Start after last trajectory
-    SYNC = auto()  # Use exact time_offset provided
+    SYNC = auto()  # Use exact time_offset, don't update last time
+    OVERRIDE = auto()  # Use exact time_offset and reset last time
 
 
-# Global variable to track last logged time
-_last_logged_time = 0.0
+# Track both last end time and last offset separately
+_last_end_time = 0.0
+_last_offset = 0.0
 
 
 def log_motion(
@@ -32,7 +34,7 @@ def log_motion(
     trajectory: List[models.TrajectorySample],
     collision_scenes: Dict[str, models.CollisionScene],
     time_offset: float = 0,
-    timing_mode: TimingMode = TimingMode.RESET,
+    timing_mode: TimingMode = TimingMode.CONTINUE,
 ):
     """
     Fetch and process a single motion with timing control.
@@ -44,16 +46,19 @@ def log_motion(
             CONTINUE: Start after last trajectory
             SYNC: Use exact time_offset provided
     """
-    global _last_logged_time
+    global _last_end_time, _last_offset
 
     # Calculate start time based on timing mode
     if timing_mode == TimingMode.CONTINUE:
-        effective_offset = _last_logged_time
+        effective_offset = _last_end_time + _last_offset
     elif timing_mode == TimingMode.SYNC:
+        effective_offset = _last_end_time
+    elif timing_mode == TimingMode.OVERRIDE:
         effective_offset = time_offset
+        _last_end_time = time_offset
     else:  # TimingMode.RESET
         effective_offset = time_offset
-        _last_logged_time = 0.0
+        _last_end_time = time_offset
 
     # Initialize DHRobot and Visualizer
     robot = DHRobot(optimizer_config.dh_parameters, optimizer_config.mounting)
@@ -84,9 +89,13 @@ def log_motion(
         timer_offset=effective_offset,
     )
 
-    # Update last logged time
+    # Update last times based on timing mode
     if trajectory:
-        _last_logged_time = effective_offset + trajectory[-1].time
+        if timing_mode == TimingMode.SYNC:
+            _last_offset = trajectory[-1].time
+        else:
+            _last_offset = 0
+            _last_end_time = effective_offset + trajectory[-1].time
 
 
 def log_trajectory_path(
