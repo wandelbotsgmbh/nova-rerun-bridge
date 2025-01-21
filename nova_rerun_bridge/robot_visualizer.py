@@ -10,7 +10,13 @@ from scipy.spatial.transform import Rotation
 from nova_rerun_bridge import colors
 from nova_rerun_bridge.conversion_helpers import normalize_pose
 from nova_rerun_bridge.dh_robot import DHRobot
+from nova_rerun_bridge.helper_scripts.download_models import get_project_root
 from nova_rerun_bridge.hull_visualizer import HullVisualizer
+
+
+def get_model_path(model_name: str) -> str:
+    """Get absolute path to model file in project directory"""
+    return str(get_project_root() / "models" / f"{model_name}.glb")
 
 
 class RobotVisualizer:
@@ -22,9 +28,9 @@ class RobotVisualizer:
         static_transform: bool = True,
         base_entity_path: str = "robot",
         albedo_factor: list = [255, 255, 255],
-        glb_path: str = "",
         collision_link_chain=None,
         collision_tcp=None,
+        model_from_controller="",
     ):
         """
         :param robot: DHRobot instance
@@ -53,6 +59,7 @@ class RobotVisualizer:
 
         # load mesh
         try:
+            glb_path = get_model_path(model_from_controller)
             self.scene = trimesh.load(glb_path, file_type="glb")
             self.mesh_loaded = True
             self.edge_data = self.scene.graph.transforms.edge_data

@@ -1,4 +1,5 @@
 from datetime import datetime
+from pathlib import Path
 from typing import Dict
 
 import rerun as rr
@@ -10,6 +11,7 @@ from nova.core.nova import Nova
 from nova_rerun_bridge.blueprint import send_blueprint
 from nova_rerun_bridge.collision_scene import log_collision_scenes
 from nova_rerun_bridge.consts import RECORDING_INTERVAL
+from nova_rerun_bridge.helper_scripts.download_models import get_project_root
 from nova_rerun_bridge.trajectory import TimingMode, log_motion
 
 
@@ -38,11 +40,18 @@ class NovaRerunBridge:
     """
 
     def __init__(self, nova: Nova, spawn: bool = True) -> None:
+        self._ensure_models_exist()
         self.nova = nova
         if spawn:
             recording_id = f"nova_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
             rr.init(application_id="nova", recording_id=recording_id, spawn=True)
         logger.add(sink=rr.LoggingHandler("logs/handler"))
+
+    def _ensure_models_exist(self):
+        """Ensure robot models are downloaded"""
+        models_dir = Path(get_project_root()).parent / "models"
+        if not models_dir.exists() or not list(models_dir.glob("*.glb")):
+            print("Models not found, run update_robot_models() or poetry run download-models")
 
     async def setup_blueprint(self) -> None:
         """Configure and send blueprint configuration to Rerun.
