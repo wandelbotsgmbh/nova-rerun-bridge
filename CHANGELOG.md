@@ -1,6 +1,17 @@
 # CHANGELOG
 
 
+## v0.9.0 (2025-01-21)
+
+### Features
+
+- Add sync and continue modes
+  ([`8e7b415`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/8e7b4154cb49482351e3f65ae71ed2e9324e27c3))
+
+- Add timing_mode
+  ([`803ee99`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/803ee99067a7f0d1112f40ceb358edc0f7e6d9ac))
+
+
 ## v0.8.0 (2025-01-21)
 
 ### Features
