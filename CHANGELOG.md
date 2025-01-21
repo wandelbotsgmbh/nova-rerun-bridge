@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.10.1 (2025-01-21)
+
+### Bug Fixes
+
+- Model path check
+  ([`97723b8`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/97723b81e19475037ff2bd4dfaa851dec1a3353d))
+
+
 ## v0.10.0 (2025-01-21)
 
 ### Features
