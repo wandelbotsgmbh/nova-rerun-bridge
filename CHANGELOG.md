@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.10.0 (2025-01-21)
+
+### Features
+
+- Add download models job
+  ([`ecd13ea`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/ecd13eaf92eb6dc04c6f8d796c30d3f8ca7e1b0b))
+
+
 ## v0.9.0 (2025-01-21)
 
 ### Features
