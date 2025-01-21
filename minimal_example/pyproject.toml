@@ -1,11 +1,10 @@
 [tool.poetry]
-name = "test"
-version = "0.8.0"
-description = "Visualizes the state of your nova instance inside of [rerun.io](https://rerun.io). This is intended to be used alongside the [nova python lib](https://github.com/wandelbotsgmbh/wandelbots-nova)."
+name = "Minimal Example Nova Rerun Bridge"
+version = "0.0.1"
+description = "Minimal example of a project using the nova_rerun_bridge"
 authors = [
     "Wandelbots GmbH",
     "Stefan Wagner <stefan.wagner@wandelbots.com>",
-    "André Kühnert <andre.kuhnert@wandelbots.com>"
 ]
 readme = "README.md"
 

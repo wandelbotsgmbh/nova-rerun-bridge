@@ -1,9 +1,8 @@
 # Nova Rerun Bridge
 
 [![PyPI version](https://badge.fury.io/py/nova-rerun-bridge.svg)](https://badge.fury.io/py/nova-rerun-bridge)
-[![Python](https://img.shields.io/pypi/pyversions/nova-rerun-bridge.svg)](https://pypi.org/project/nova-rerun-bridge/)
-[![License](https://img.shields.io/github/license/wandelbots/nova-rerun-bridge.svg)](https://github.com/wandelbots/nova-rerun-bridge/blob/main/LICENSE)
-[![Build Status](https://github.com/wandelbots/nova-rerun-bridge/workflows/CI/badge.svg)](https://github.com/wandelbots/nova-rerun-bridge/actions)
+[![License](https://img.shields.io/github/license/wandelbots/nova-rerun-bridge.svg)](https://github.com/wandelbotsgmbh/nova-rerun-bridge/blob/main/LICENSE)
+[![Build Status](https://github.com/wandelbotsgmbh/nova-rerun-bridge/workflows/CI/badge.svg)](https://github.com/wandelbotsgmbh/nova-rerun-bridge/actions)
 
 Visualizes the state of your nova instance inside of [rerun.io](https://rerun.io). Rerun is a tool to quickly visualize time series data. [Instructions](https://rerun.io/docs/reference/viewer/overview) for navigation within the Rerun Viewer.
 This is intended to be used alongside the [nova python lib](https://github.com/wandelbotsgmbh/wandelbots-nova). You will need a running nova instance. Register on [wandelbots.com](https://www.wandelbots.com/) to get access.
