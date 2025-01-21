@@ -64,13 +64,9 @@ await bridge.log_collision_scene()
 
 Adjust the `NOVA_API` and `NOVA_ACCESS_TOKEN` in the `.env` file to your instance URL (e.g. `https://unzhoume.instance.wandelbots.io`) and access token. You can find the access token in the developer portal.
 
-Run the following command to install the dependencies:
+## 📚 More Examples
 
-```bash
-poetry install
-```
-
-You can try out the [examples](https://github.com/wandelbotsgmbh/nova-rerun-bridge/tree/main/nova_rerun_bridge/examples) in the `examples` folder.
+Check out our [example repository](https://github.com/wandelbotsgmbh/nova-rerun-bridge/tree/main/nova_rerun_bridge/examples) for more detailed examples.
 
 ## ⚙️ Configuration
 
