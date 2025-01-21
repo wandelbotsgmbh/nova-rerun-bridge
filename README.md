@@ -124,14 +124,6 @@ The easiest way to try it out is to install the app on your nova instance. Use t
 nova catalog install rerun
 ```
 
-to use it on your nova instance.
-
-The rerun bridge can be run as a nova app. To install the app on your nova instance, use the nova cli tool and run:
-
-```bash
-nova catalog install rerun
-```
-
 There are two script which can be run to feed the data to the rerun desktop app. The app automatically runs both scripts in the background. You can also run the scripts manually on your local machine.
 
 - run `python nova_rerun_bridge/polling/populate.py` to start a service which periodically polls the nova instance for new planned trajectories
