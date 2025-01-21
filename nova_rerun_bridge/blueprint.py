@@ -1,3 +1,5 @@
+from typing import List
+
 import rerun as rr
 import rerun.blueprint as rrb
 
@@ -157,22 +159,57 @@ def joint_content_lists(motion_group: str):
     )
 
 
-def get_default_blueprint(motion_group_list: list):
-    """
-    get logging blueprints for visualization.
-    """
-
-    # Contents for the Spatial3DView
-    contents = ["motion/**", "collision_scenes/**"] + [f"{group}/**" for group in motion_group_list]
-    first_motion_group = motion_group_list[0]
-
-    time_ranges = rrb.VisibleTimeRange(
-        TIME_INTERVAL_NAME,
-        start=rrb.TimeRangeBoundary.cursor_relative(seconds=-2),
-        end=rrb.TimeRangeBoundary.cursor_relative(seconds=2),
+def create_tcp_tabs(
+    motion_group: str, time_ranges: rrb.VisibleTimeRange, plot_legend: rrb.PlotLegend
+) -> rrb.Vertical:
+    """Create TCP-related time series views."""
+    return rrb.Vertical(
+        rrb.TimeSeriesView(
+            contents=[
+                f"motion/{motion_group}/tcp_velocity/**",
+                f"motion/{motion_group}/tcp_velocity_limit/**",
+            ],
+            name="TCP velocity",
+            time_ranges=time_ranges,
+            plot_legend=plot_legend,
+        ),
+        rrb.TimeSeriesView(
+            contents=[
+                f"motion/{motion_group}/tcp_acceleration/**",
+                f"motion/{motion_group}/tcp_acceleration_lower_limit/**",
+                f"motion/{motion_group}/tcp_acceleration_upper_limit/**",
+            ],
+            name="TCP acceleration",
+            time_ranges=time_ranges,
+            plot_legend=plot_legend,
+        ),
+        rrb.TimeSeriesView(
+            contents=[
+                f"motion/{motion_group}/tcp_orientation_velocity/**",
+                f"motion/{motion_group}/tcp_orientation_velocity_limit/**",
+            ],
+            name="TCP orientation velocity",
+            time_ranges=time_ranges,
+            plot_legend=plot_legend,
+        ),
+        rrb.TimeSeriesView(
+            contents=[
+                f"motion/{motion_group}/tcp_orientation_acceleration/**",
+                f"motion/{motion_group}/tcp_orientation_acceleration_lower_limit/**",
+                f"motion/{motion_group}/tcp_orientation_acceleration_upper_limit/**",
+            ],
+            name="TCP orientation acceleration",
+            time_ranges=time_ranges,
+            plot_legend=plot_legend,
+        ),
+        name="TCP",
     )
-    plot_legend = rrb.PlotLegend(visible=False)
 
+
+def create_joint_tabs(
+    motion_group: str, time_ranges: rrb.VisibleTimeRange, plot_legend: rrb.PlotLegend
+) -> rrb.Vertical:
+    """Create joint-related time series views."""
     (
         velocity_contents,
         velocity_limits,
@@ -182,109 +219,80 @@ def get_default_blueprint(motion_group_list: list):
         pos_limits,
         torque_contents,
         torque_limits,
-    ) = joint_content_lists(first_motion_group)
+    ) = joint_content_lists(motion_group)
 
-    return rrb.Blueprint(
-        rrb.Horizontal(
-            rrb.Spatial3DView(contents=contents, name="3D Nova", background=[20, 22, 35]),
-            rrb.Tabs(
-                rrb.Vertical(
-                    rrb.TimeSeriesView(
-                        contents=[
-                            f"motion/{first_motion_group}/tcp_velocity/**",
-                            f"motion/{first_motion_group}/tcp_velocity_limit/**",
-                        ],
-                        name="TCP velocity",
-                        time_ranges=time_ranges,
-                        plot_legend=plot_legend,
-                    ),
-                    rrb.TimeSeriesView(
-                        contents=[
-                            f"motion/{first_motion_group}/tcp_acceleration/**",
-                            f"motion/{first_motion_group}/tcp_acceleration_lower_limit/**",
-                            f"motion/{first_motion_group}/tcp_acceleration_upper_limit/**",
-                        ],
-                        name="TCP acceleration",
-                        time_ranges=time_ranges,
-                        plot_legend=plot_legend,
-                    ),
-                    rrb.TimeSeriesView(
-                        contents=[
-                            f"motion/{first_motion_group}/tcp_orientation_velocity/**",
-                            f"motion/{first_motion_group}/tcp_orientation_velocity_limit/**",
-                        ],
-                        name="TCP orientation velocity",
-                        time_ranges=time_ranges,
-                        plot_legend=plot_legend,
-                    ),
-                    rrb.TimeSeriesView(
-                        contents=[
-                            f"motion/{first_motion_group}/tcp_orientation_acceleration/**",
-                            f"motion/{first_motion_group}/tcp_orientation_acceleration_lower_limit/**",
-                            f"motion/{first_motion_group}/tcp_orientation_acceleration_upper_limit/**",
-                        ],
-                        name="TCP orientation acceleration",
-                        time_ranges=time_ranges,
-                        plot_legend=plot_legend,
-                    ),
-                    rrb.TextLogView(origin="/logs/motion", name="Motions"),
-                    name="Trajectory quantities",
-                    row_shares=[1, 1, 1, 1, 0.75],
-                ),
-                rrb.Vertical(
-                    rrb.TimeSeriesView(
-                        contents=velocity_contents + velocity_limits,
-                        name="Joint velocity",
-                        time_ranges=time_ranges,
-                        plot_legend=plot_legend,
-                    ),
-                    rrb.TimeSeriesView(
-                        contents=accel_contents + accel_limits,
-                        name="Joint acceleration",
-                        time_ranges=time_ranges,
-                        plot_legend=plot_legend,
-                    ),
-                    rrb.TimeSeriesView(
-                        contents=pos_contents + pos_limits,
-                        name="Joint position",
-                        time_ranges=time_ranges,
-                        plot_legend=plot_legend,
-                    ),
-                    rrb.TimeSeriesView(
-                        contents=torque_contents + torque_limits,
-                        name="Joint torque",
-                        time_ranges=time_ranges,
-                        plot_legend=plot_legend,
-                    ),
-                    name="Joint quantities",
-                ),
-                rrb.TimeSeriesView(
-                    contents=f"motion/{first_motion_group}/time",
-                    name="Time trajectory",
-                    time_ranges=time_ranges,
-                    plot_legend=plot_legend,
-                ),
-                rrb.TimeSeriesView(
-                    contents=f"motion/{first_motion_group}/location_on_trajectory",
-                    name="Location on trajectory",
-                    time_ranges=time_ranges,
-                    plot_legend=plot_legend,
-                ),
-                rrb.TextLogView(origin="/logs", name="API Call Logs"),
-            ),
-            column_shares=[1, 0.3],
+    return rrb.Vertical(
+        rrb.TimeSeriesView(
+            contents=velocity_contents + velocity_limits,
+            name="Joint velocity",
+            time_ranges=time_ranges,
+            plot_legend=plot_legend,
         ),
-        collapse_panels=True,
+        rrb.TimeSeriesView(
+            contents=accel_contents + accel_limits,
+            name="Joint acceleration",
+            time_ranges=time_ranges,
+            plot_legend=plot_legend,
+        ),
+        rrb.TimeSeriesView(
+            contents=pos_contents + pos_limits,
+            name="Joint position",
+            time_ranges=time_ranges,
+            plot_legend=plot_legend,
+        ),
+        rrb.TimeSeriesView(
+            contents=torque_contents + torque_limits,
+            name="Joint torque",
+            time_ranges=time_ranges,
+            plot_legend=plot_legend,
+        ),
+        name="Joints",
     )
 
 
-def send_blueprint(motion_group_list: list):
-    """
-    Configure logging blueprints for visualization.
-    """
+def create_motion_group_tabs(
+    motion_group: str, time_ranges: rrb.VisibleTimeRange, plot_legend: rrb.PlotLegend
+) -> rrb.Vertical:
+    """Create nested tab structure for a motion group."""
+    return rrb.Vertical(
+        rrb.Tabs(
+            create_tcp_tabs(motion_group, time_ranges, plot_legend),
+            create_joint_tabs(motion_group, time_ranges, plot_legend),
+        ),
+        name=f"Motion Group: {motion_group}",
+    )
 
+
+def send_blueprint(motion_group_list: List[str]) -> None:
+    """Send blueprint with nested tab structure."""
     for motion_group in motion_group_list:
         configure_tcp_line_colors(motion_group)
         configure_joint_line_colors(motion_group)
 
-    rr.send_blueprint(get_default_blueprint(motion_group_list))
+    contents = ["motion/**", "collision_scenes/**"] + [f"{group}/**" for group in motion_group_list]
+
+    time_ranges = rrb.VisibleTimeRange(
+        TIME_INTERVAL_NAME,
+        start=rrb.TimeRangeBoundary.cursor_relative(seconds=-2),
+        end=rrb.TimeRangeBoundary.cursor_relative(seconds=2),
+    )
+    plot_legend = rrb.PlotLegend(visible=False)
+
+    motion_group_tabs = [
+        create_motion_group_tabs(group, time_ranges, plot_legend) for group in motion_group_list
+    ]
+
+    rr.send_blueprint(
+        rrb.Blueprint(
+            rrb.Horizontal(
+                rrb.Spatial3DView(contents=contents, name="3D Nova", background=[20, 22, 35]),
+                rrb.Tabs(
+                    *motion_group_tabs,
+                    rrb.TextLogView(origin="/logs/motion", name="Motions"),
+                    rrb.TextLogView(origin="/logs", name="API Call Logs"),
+                ),
+                column_shares=[1, 0.3],
+            ),
+            collapse_panels=True,
+        )
+    )
