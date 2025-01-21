@@ -57,7 +57,7 @@ await bridge.log_trajectory(joint_trajectory, tcp, motion_group)
 
 ```python
 # Log collision scenes
-await bridge.log_collision_scene()
+await bridge.fetch_and_log_collision_scenes()
 ```
 
 ## Setup
@@ -90,7 +90,7 @@ This will download the robot models into your project folder. You can use the li
 
 ### Tools
 
-- code formatting and linting is done with [ruff]
+Code formatting and linting is done with [ruff]
 
 ```bash
 poetry run ruff check scripts/. --fix

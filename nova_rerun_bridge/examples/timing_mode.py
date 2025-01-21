@@ -15,7 +15,7 @@ Prerequisites:
 """
 
 
-async def move_robot(controller: Controller, nova_bridge: NovaRerunBridge):
+async def move_robot(controller: Controller, bridge: NovaRerunBridge):
     async with controller[0] as motion_group:
         home_joints = await motion_group.joints()
         tcp_names = await motion_group.tcp_names()
@@ -26,15 +26,15 @@ async def move_robot(controller: Controller, nova_bridge: NovaRerunBridge):
         actions = [jnt(home_joints), ptp(target_pose), jnt(home_joints)]
 
         trajectory = await motion_group.plan(actions, tcp)
-        await nova_bridge.log_trajectory(trajectory, tcp, motion_group, timing_mode=TimingMode.SYNC)
+        await bridge.log_trajectory(trajectory, tcp, motion_group, timing_mode=TimingMode.SYNC)
 
         await motion_group.plan_and_execute(actions, tcp)
 
 
 async def main():
     nova = Nova()
-    nova_bridge = NovaRerunBridge(nova)
-    await nova_bridge.setup_blueprint()
+    bridge = NovaRerunBridge(nova)
+    await bridge.setup_blueprint()
 
     cell = nova.cell()
     controllers = await cell.controllers()
@@ -68,17 +68,15 @@ async def main():
 
         joint_trajectory = await motion_group.plan(actions, tcp)
 
-        await nova_bridge.log_trajectory(joint_trajectory, tcp, motion_group)
-        await nova_bridge.log_trajectory(joint_trajectory, tcp, motion_group)
+        await bridge.log_trajectory(joint_trajectory, tcp, motion_group)
+        await bridge.log_trajectory(joint_trajectory, tcp, motion_group)
 
         await motion_group.execute(joint_trajectory, tcp, actions=actions)
 
     cell = nova.cell()
     ur = await cell.controller("ur")
     kuka = await cell.controller("kuka")
-    await asyncio.gather(
-        move_robot(ur, nova_bridge=nova_bridge), move_robot(kuka, nova_bridge=nova_bridge)
-    )
+    await asyncio.gather(move_robot(ur, bridge=bridge), move_robot(kuka, bridge=bridge))
 
     # Connect to the controller and activate motion groups
     async with controller[0] as motion_group:
@@ -108,13 +106,13 @@ async def main():
 
         joint_trajectory = await motion_group.plan(actions, tcp)
 
-        await nova_bridge.log_trajectory(joint_trajectory, tcp, motion_group)
-        await nova_bridge.log_trajectory(joint_trajectory, tcp, motion_group)
+        await bridge.log_trajectory(joint_trajectory, tcp, motion_group)
+        await bridge.log_trajectory(joint_trajectory, tcp, motion_group)
 
         await motion_group.execute(joint_trajectory, tcp, actions=actions)
 
     await nova.close()
-    await nova_bridge.cleanup()
+    await bridge.cleanup()
 
 
 if __name__ == "__main__":

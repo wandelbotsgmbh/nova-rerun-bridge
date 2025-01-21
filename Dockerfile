@@ -30,6 +30,7 @@ COPY src src
 COPY static static
 
 COPY models models
+COPY nova_rerun_bridge nova_rerun_bridge
 
 COPY start.sh /app/start.sh
 RUN chmod +x /app/start.sh

@@ -9,8 +9,8 @@ from nova_rerun_bridge import NovaRerunBridge
 
 
 async def test():
-    async with Nova() as nova, NovaRerunBridge(nova) as nova_bridge:
-        await nova_bridge.setup_blueprint()
+    async with Nova() as nova, NovaRerunBridge(nova) as bridge:
+        await bridge.setup_blueprint()
 
         cell = nova.cell()
         controllers = await cell.controllers()
@@ -44,7 +44,7 @@ async def test():
 
             joint_trajectory = await motion_group.plan(actions, tcp)
 
-            await nova_bridge.log_trajectory(joint_trajectory, tcp, motion_group)
+            await bridge.log_trajectory(joint_trajectory, tcp, motion_group)
             await motion_group.execute(joint_trajectory, tcp, actions=actions)
 
         await nova.close()
