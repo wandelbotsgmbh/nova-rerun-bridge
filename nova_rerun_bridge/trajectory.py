@@ -65,7 +65,7 @@ def log_trajectory_path(
         rr.LineStrips3D([points], colors=[[1.0, 1.0, 1.0, 1.0]]),
     )
 
-    rr.log("logs", rr.TextLog(f"{motion_group}/{motion_id}", level=rr.TextLogLevel.INFO))
+    rr.log("logs/motion", rr.TextLog(f"{motion_group}/{motion_id}", level=rr.TextLogLevel.INFO))
 
 
 def get_times_column(

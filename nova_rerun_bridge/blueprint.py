@@ -227,9 +227,9 @@ def get_default_blueprint(motion_group_list: list):
                         time_ranges=time_ranges,
                         plot_legend=plot_legend,
                     ),
-                    rrb.TextLogView(origin="/logs", name="Logs"),
+                    rrb.TextLogView(origin="/logs/motion", name="Motions"),
                     name="Trajectory quantities",
-                    row_shares=[1, 1, 1, 1, 0.5],
+                    row_shares=[1, 1, 1, 1, 0.75],
                 ),
                 rrb.Vertical(
                     rrb.TimeSeriesView(
@@ -270,6 +270,7 @@ def get_default_blueprint(motion_group_list: list):
                     time_ranges=time_ranges,
                     plot_legend=plot_legend,
                 ),
+                rrb.TextLogView(origin="/logs", name="API Call Logs"),
             ),
             column_shares=[1, 0.3],
         ),
