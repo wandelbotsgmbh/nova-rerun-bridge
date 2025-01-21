@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.6.0 (2025-01-21)
+
+### Features
+
+- Add multiple robot example
+  ([`431cee2`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/431cee2acb6687c337891e6763f86f49f942c464))
+
+
 ## v0.5.0 (2025-01-20)
 
 ### Features
