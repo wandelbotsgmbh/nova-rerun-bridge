@@ -49,7 +49,7 @@ class NovaRerunBridge:
 
     def _ensure_models_exist(self):
         """Ensure robot models are downloaded"""
-        models_dir = Path(get_project_root()).parent / "models"
+        models_dir = Path(get_project_root()) / "models"
         if not models_dir.exists() or not list(models_dir.glob("*.glb")):
             print("Models not found, run update_robot_models() or poetry run download-models")
 
