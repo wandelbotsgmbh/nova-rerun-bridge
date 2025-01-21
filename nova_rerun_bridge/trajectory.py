@@ -71,7 +71,7 @@ def log_motion(
         tcp_geometries=optimizer_config.safety_setup.tcp_geometries,
         static_transform=False,
         base_entity_path=f"motion/{motion_group}",
-        glb_path=f"models/{model_from_controller}.glb",
+        model_from_controller=model_from_controller,
         collision_link_chain=collision_link_chain,
         collision_tcp=collision_tcp,
     )
