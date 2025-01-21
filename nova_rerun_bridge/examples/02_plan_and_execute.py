@@ -45,8 +45,6 @@ async def test():
             joint_trajectory = await motion_group.plan(actions, tcp)
 
             await nova_bridge.log_trajectory(joint_trajectory, tcp, motion_group)
-            await nova_bridge.log_trajectory(joint_trajectory, tcp, motion_group)
-
             await motion_group.execute(joint_trajectory, tcp, actions=actions)
 
         await nova.close()

@@ -13,12 +13,13 @@ test_rerun/
 ## Running the Example
 
 1. Ensure you have the required dependencies installed with `poetry install`
-2. Add an .env file with the necessary environment variables:
+2. Download the robot models by running `poetry run download_models`
+3. Add an .env file with the necessary environment variables:
    ```sh
    NOVA_API=<your-url-instance>
    NOVA_ACCESS_TOKEN=<your-nova-access-token>
    ```
-3. Run the `test.py` script:
+4. Run the `test.py` script:
    ```sh
    python test.py
    ```
