@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.8.0 (2025-01-21)
+
+### Features
+
+- Log info for each motion group
+  ([`e257928`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/e257928c9cb0945acb078ebe84e8fe10e26b571c))
+
+
 ## v0.7.0 (2025-01-21)
 
 ### Features
