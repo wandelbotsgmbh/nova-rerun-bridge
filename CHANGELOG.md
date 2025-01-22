@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.13.1 (2025-01-22)
+
+### Bug Fixes
+
+- Toggle connection off
+  ([`2dd09e1`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/2dd09e19432df0319682961c5b4bc7686958f793))
+
+
 ## v0.13.0 (2025-01-22)
 
 ### Features
