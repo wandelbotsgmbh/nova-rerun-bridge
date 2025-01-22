@@ -68,6 +68,16 @@ await bridge.log_trajectory(joint_trajectory, tcp, motion_group)
 await bridge.fetch_and_log_collision_scenes()
 ```
 
+### Stream current robot state
+
+```python
+# Start streaming robot state
+await bridge.start_streaming(motion_group)
+
+# Stop streaming all robot states
+await bridge.stop_streaming()
+```
+
 ## Setup
 
 Adjust the `NOVA_API` and `NOVA_ACCESS_TOKEN` in the `.env` file to your instance URL (e.g. `https://unzhoume.instance.wandelbots.io`) and access token. You can find the access token in the developer portal.
@@ -129,10 +139,9 @@ The easiest way to try it out is to install the app on your nova instance. Use t
 nova catalog install rerun
 ```
 
-There are two script which can be run to feed the data to the rerun desktop app. The app automatically runs both scripts in the background. You can also run the scripts manually on your local machine.
+The app uses the populate script to feed the data to the rerun desktop app. The app automatically runs this script in the background. You can also run the script manually on your local machine.
 
 - run `python nova_rerun_bridge/polling/populate.py` to start a service which periodically polls the nova instance for new planned trajectories
-- run `python nova_rerun_bridge/polling/stream_motion_groups.py` to start a service which streams the state of the active motion groups
 
 ## Development
 

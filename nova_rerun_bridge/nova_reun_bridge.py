@@ -1,3 +1,4 @@
+import asyncio
 from datetime import datetime
 from pathlib import Path
 from typing import Dict
@@ -12,6 +13,7 @@ from nova_rerun_bridge.blueprint import send_blueprint
 from nova_rerun_bridge.collision_scene import log_collision_scenes
 from nova_rerun_bridge.consts import RECORDING_INTERVAL
 from nova_rerun_bridge.helper_scripts.download_models import get_project_root
+from nova_rerun_bridge.stream_state import stream_motion_group
 from nova_rerun_bridge.trajectory import TimingMode, log_motion
 
 
@@ -42,6 +44,7 @@ class NovaRerunBridge:
     def __init__(self, nova: Nova, spawn: bool = True) -> None:
         self._ensure_models_exist()
         self.nova = nova
+        self._streaming_tasks = {}
         if spawn:
             recording_id = f"nova_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
             rr.init(application_id="nova", recording_id=recording_id, spawn=True)
@@ -161,6 +164,20 @@ class NovaRerunBridge:
         await self.log_motion(
             load_plan_response.motion, timing_mode=timing_mode, time_offset=time_offset
         )
+
+    async def start_streaming(self, motion_group: MotionGroup) -> None:
+        """Start streaming real-time robot state to Rerun viewer."""
+        if motion_group in self._streaming_tasks:
+            return
+
+        task = asyncio.create_task(stream_motion_group(self, motion_group=motion_group))
+        self._streaming_tasks[motion_group] = task
+
+    async def stop_streaming(self) -> None:
+        """Stop all streaming tasks."""
+        for task in self._streaming_tasks.values():
+            task.cancel()
+        self._streaming_tasks.clear()
 
     async def __aenter__(self) -> "NovaRerunBridge":
         """Context manager entry point.
