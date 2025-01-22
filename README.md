@@ -4,10 +4,15 @@
 [![License](https://img.shields.io/github/license/wandelbotsgmbh/nova-rerun-bridge.svg)](https://github.com/wandelbotsgmbh/nova-rerun-bridge/blob/main/LICENSE)
 [![Build Status](https://github.com/wandelbotsgmbh/nova-rerun-bridge/actions/workflows/release.yml/badge.svg)](https://github.com/wandelbotsgmbh/nova-rerun-bridge/actions/workflows/release.yml)
 
-Visualizes the state of your nova instance inside of [rerun.io](https://rerun.io). Rerun is a tool to quickly visualize time series data. [Instructions](https://rerun.io/docs/reference/viewer/overview) for navigation within the Rerun Viewer.
-This is intended to be used alongside the [nova python lib](https://github.com/wandelbotsgmbh/wandelbots-nova). You will need a running nova instance. Register on [wandelbots.com](https://www.wandelbots.com/) to get access.
+A visualization extension for [wandelbots-nova](https://github.com/wandelbotsgmbh/wandelbots-nova) that enables real-time 3D visualization of robot trajectories using [rerun.io](https://rerun.io).
 
 https://github.com/user-attachments/assets/ab527bc4-720a-41f2-9499-54d6ed027163
+
+## Prerequisites
+
+- A running Nova instance (get access at [wandelbots.com](https://www.wandelbots.com/))
+- [wandelbots-nova](https://pypi.org/project/wandelbots-nova/) Python package
+- Valid Nova API credentials
 
 ## 🚀 Quick Start
 
@@ -23,8 +28,11 @@ poetry run download-models
 from nova_rerun_bridge import NovaRerunBridge
 from nova import Nova
 
-# Initialize
-nova = Nova()
+# Connect to your Nova instance (or use .env file)
+nova = Nova(
+    host="https://your-instance.wandelbots.io",
+    access_token="your-token"
+)
 bridge = NovaRerunBridge(nova)
 
 # Setup visualization
