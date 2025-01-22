@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.11.0 (2025-01-22)
+
+### Features
+
+- Add robot state streaming
+  ([`49615cd`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/49615cd1e2ea1bc4575ce437f7aec3860db361af))
+
+
 ## v0.10.1 (2025-01-21)
 
 ### Bug Fixes
