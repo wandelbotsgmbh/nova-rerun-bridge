@@ -8,6 +8,10 @@ from loguru import logger
 from nova import MotionGroup
 from nova.api import models
 from nova.core.nova import Nova
+from wandelbots_api_client.models import (
+    FeedbackOutOfWorkspace,
+    PlanTrajectoryFailedResponseErrorFeedback,
+)
 
 from nova_rerun_bridge.blueprint import send_blueprint
 from nova_rerun_bridge.collision_scene import log_collision_scenes
@@ -164,6 +168,25 @@ class NovaRerunBridge:
         await self.log_motion(
             load_plan_response.motion, timing_mode=timing_mode, time_offset=time_offset
         )
+
+    async def log_error_feedback(
+        self, error_feedback: PlanTrajectoryFailedResponseErrorFeedback
+    ) -> None:
+        if isinstance(error_feedback.actual_instance, FeedbackOutOfWorkspace):
+            rr.log(
+                "motion/errors/FeedbackOutOfWorkspace",
+                rr.Points3D(
+                    [
+                        error_feedback.actual_instance.invalid_tcp_pose.position[0],
+                        error_feedback.actual_instance.invalid_tcp_pose.position[1],
+                        error_feedback.actual_instance.invalid_tcp_pose.position[2],
+                    ],
+                    radii=rr.Radius.ui_points([5.0]),
+                    colors=[(255, 0, 0, 255)],
+                    labels=["Out of Workspace"],
+                ),
+                timeless=True,
+            )
 
     async def start_streaming(self, motion_group: MotionGroup) -> None:
         """Start streaming real-time robot state to Rerun viewer."""
