@@ -4,7 +4,6 @@ from pathlib import Path
 from typing import Dict
 
 import rerun as rr
-import wandelbots_api_client as wb
 from loguru import logger
 from nova import MotionGroup
 from nova.actions import Action, CombinedActions
@@ -205,7 +204,9 @@ class NovaRerunBridge:
             task.cancel()
         self._streaming_tasks.clear()
 
-    async def log_actions(self, actions: list[Action] | Action) -> wb.models.JointTrajectory:
+    async def log_actions(
+        self, actions: list[Action] | Action, show_connection: bool = False
+    ) -> None:
         from nova_rerun_bridge import trajectory
 
         rr.set_time_seconds(TIME_INTERVAL_NAME, trajectory._last_end_time)
@@ -236,9 +237,11 @@ class NovaRerunBridge:
             static=True,
         )
 
-        rr.log(
-            "motion/actions/connection", rr.LineStrips3D([positions], colors=[155, 155, 155, 50])
-        )
+        if show_connection:
+            rr.log(
+                "motion/actions/connection",
+                rr.LineStrips3D([positions], colors=[155, 155, 155, 50]),
+            )
 
     async def __aenter__(self) -> "NovaRerunBridge":
         """Context manager entry point.
