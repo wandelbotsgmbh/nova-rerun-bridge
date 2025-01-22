@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.13.0 (2025-01-22)
+
+### Features
+
+- Log actions
+  ([`28ecd76`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/28ecd76668299aef7aca052af27398ac5d2dacea))
+
+
 ## v0.12.0 (2025-01-22)
 
 ### Features
