@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.12.0 (2025-01-22)
+
+### Features
+
+- Add log out of workspace
+  ([`788b2e3`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/788b2e34a6b18d4667f0ead6fb56dfd6a4d92bc0))
+
+
 ## v0.11.0 (2025-01-22)
 
 ### Features
