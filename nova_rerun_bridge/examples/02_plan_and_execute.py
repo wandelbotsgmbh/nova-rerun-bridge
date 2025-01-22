@@ -1,6 +1,4 @@
 import asyncio
-import signal
-from contextlib import asynccontextmanager
 
 from nova import MotionSettings
 from nova.actions import jnt, ptp
@@ -8,22 +6,6 @@ from nova.core.nova import Nova
 from nova.types import Pose
 
 from nova_rerun_bridge import NovaRerunBridge
-
-
-@asynccontextmanager
-async def handle_shutdown():
-    stop = asyncio.Future()
-
-    def signal_handler():
-        if not stop.done():
-            stop.set_result(None)
-
-    loop = asyncio.get_event_loop()
-    loop.add_signal_handler(signal.SIGINT, signal_handler)
-    try:
-        yield stop
-    finally:
-        loop.remove_signal_handler(signal.SIGINT)
 
 
 async def test():
@@ -39,8 +21,6 @@ async def test():
             home_joints = await motion_group.joints()
             tcp_names = await motion_group.tcp_names()
             tcp = tcp_names[0]
-
-            await bridge.start_streaming(motion_group)
 
             # Get current TCP pose and offset it slightly along the x-axis
             current_pose = await motion_group.tcp_pose(tcp)
@@ -58,22 +38,16 @@ async def test():
                 jnt(home_joints),
             ]
 
+            # you can update the settings of the action
             for action in actions:
                 action.settings = MotionSettings(tcp_velocity_limit=200)
 
             joint_trajectory = await motion_group.plan(actions, tcp)
-            await bridge.log_trajectory(joint_trajectory, tcp, motion_group)
 
+            await bridge.log_trajectory(joint_trajectory, tcp, motion_group)
             await motion_group.execute(joint_trajectory, tcp, actions=actions)
 
-            # Keep streaming until Ctrl+C
-            async with handle_shutdown() as stop:
-                try:
-                    await stop
-                except asyncio.CancelledError:
-                    pass
-                finally:
-                    await bridge.stop_streaming()
+        await nova.close()
 
 
 if __name__ == "__main__":
