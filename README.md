@@ -78,6 +78,13 @@ await bridge.start_streaming(motion_group)
 await bridge.stop_streaming()
 ```
 
+### Log Actions
+
+```python
+# Log planned actions
+await bridge.log_actions(actions)
+```
+
 ## Setup
 
 Adjust the `NOVA_API` and `NOVA_ACCESS_TOKEN` in the `.env` file to your instance URL (e.g. `https://unzhoume.instance.wandelbots.io`) and access token. You can find the access token in the developer portal.

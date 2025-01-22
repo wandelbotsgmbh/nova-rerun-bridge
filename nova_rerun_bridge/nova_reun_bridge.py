@@ -4,8 +4,10 @@ from pathlib import Path
 from typing import Dict
 
 import rerun as rr
+import wandelbots_api_client as wb
 from loguru import logger
 from nova import MotionGroup
+from nova.actions import Action, CombinedActions
 from nova.api import models
 from nova.core.nova import Nova
 from wandelbots_api_client.models import (
@@ -13,9 +15,10 @@ from wandelbots_api_client.models import (
     PlanTrajectoryFailedResponseErrorFeedback,
 )
 
+from nova_rerun_bridge import colors
 from nova_rerun_bridge.blueprint import send_blueprint
 from nova_rerun_bridge.collision_scene import log_collision_scenes
-from nova_rerun_bridge.consts import RECORDING_INTERVAL
+from nova_rerun_bridge.consts import RECORDING_INTERVAL, TIME_INTERVAL_NAME
 from nova_rerun_bridge.helper_scripts.download_models import get_project_root
 from nova_rerun_bridge.stream_state import stream_motion_group
 from nova_rerun_bridge.trajectory import TimingMode, log_motion
@@ -201,6 +204,41 @@ class NovaRerunBridge:
         for task in self._streaming_tasks.values():
             task.cancel()
         self._streaming_tasks.clear()
+
+    async def log_actions(self, actions: list[Action] | Action) -> wb.models.JointTrajectory:
+        from nova_rerun_bridge import trajectory
+
+        rr.set_time_seconds(TIME_INTERVAL_NAME, trajectory._last_end_time)
+
+        if not isinstance(actions, list):
+            actions = [actions]
+
+        if len(actions) == 0:
+            raise ValueError("No actions provided")
+
+        poses = CombinedActions(items=tuple(actions)).poses()
+        positions = []
+
+        # Collect all positions
+        for pose in poses:
+            logger.debug(f"Pose: {pose}")
+            positions.append([pose.position.x, pose.position.y, pose.position.z])
+
+        # Log all positions at once
+        rr.log(
+            "motion/actions",
+            rr.Points3D(
+                positions,
+                colors=[colors.colors[0]] * len(positions),  # Green points
+                radii=rr.Radius.ui_points([1.0]) * len(positions),
+            ),
+            timeless=True,
+            static=True,
+        )
+
+        rr.log(
+            "motion/actions/connection", rr.LineStrips3D([positions], colors=[155, 155, 155, 50])
+        )
 
     async def __aenter__(self) -> "NovaRerunBridge":
         """Context manager entry point.

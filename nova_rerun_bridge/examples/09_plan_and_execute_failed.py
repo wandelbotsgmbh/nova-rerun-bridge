@@ -29,9 +29,10 @@ async def test():
 
             actions = [
                 jnt(home_joints),
-                ptp(target_pose),
                 ptp(target_pose @ [-100, 0, 0, 0, 0, 0]),
-                ptp(target_pose @ [-10000, 0, 0, 0, 0, 0]),
+                ptp(target_pose @ [-200, 0, 0, 0, 0, 0]),
+                ptp(target_pose @ [-500, 0, 0, 0, 0, 0]),
+                ptp(target_pose @ [-2000, 0, 0, 0, 0, 0]),
                 jnt(home_joints),
             ]
 
@@ -41,10 +42,11 @@ async def test():
 
             try:
                 joint_trajectory = await motion_group.plan(actions, tcp)
+                await bridge.log_actions(actions)
                 await bridge.log_trajectory(joint_trajectory, tcp, motion_group)
                 await motion_group.execute(joint_trajectory, tcp, actions=actions)
             except PlanTrajectoryFailed as e:
-                # Optionally visualize the failed planning attempt if available
+                await bridge.log_actions(actions)
                 await bridge.log_trajectory(e.error.joint_trajectory, tcp, motion_group)
                 await bridge.log_error_feedback(e.error.error_feedback)
                 return
