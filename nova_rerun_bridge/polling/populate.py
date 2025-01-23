@@ -5,9 +5,9 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 from nova import Nova
 
+from nova_rerun_bridge import NovaRerunBridge
 from nova_rerun_bridge.consts import RECORDING_INTERVAL, SCHEDULE_INTERVAL, TIME_INTERVAL_NAME
 from nova_rerun_bridge.motion_storage import load_processed_motions, save_processed_motion
-from nova_rerun_bridge.nova_reun_bridge import NovaRerunBridge
 
 # Global run flags
 job_running = False
@@ -23,10 +23,7 @@ async def process_motions():
     global first_run
     global previous_motion_group_list
 
-    async with (
-        Nova() as nova,
-        NovaRerunBridge(nova, spawn=True, recording_id="nova_live") as nova_bridge,
-    ):
+    async with Nova() as nova:
         motion_api = nova._api_client.motion_api
         motion_group_api = nova._api_client.motion_group_api
 
@@ -44,7 +41,6 @@ async def process_motions():
                 processed_motion_ids = {m[0] for m in processed_motions}
 
                 time_offset = sum(m[1] for m in processed_motions)
-                rr.set_time_seconds(TIME_INTERVAL_NAME, time_offset)
 
                 # Filter out already processed motions
                 new_motions = [
@@ -54,36 +50,42 @@ async def process_motions():
                 ]
 
                 for motion_id in new_motions:
-                    print(f"Processing motion {motion_id}.", flush=True)
-                    await nova_bridge.log_collision_scenes()
-
-                    # Configure logging blueprints only if motion_group_list has changed
-                    motion_groups = await motion_group_api.list_motion_groups("cell")
-                    motion_group_list = [
-                        active_motion_group.motion_group
-                        for active_motion_group in motion_groups.instances
-                    ]
-                    if motion_group_list != previous_motion_group_list:
+                    async with NovaRerunBridge(
+                        nova, spawn=True, recording_id="nova_live"
+                    ) as nova_bridge:
                         await nova_bridge.setup_blueprint()
-                        previous_motion_group_list = motion_group_list
+                        print(f"Processing motion {motion_id}.", flush=True)
+                        rr.set_time_seconds(TIME_INTERVAL_NAME, time_offset)
 
-                    if motion_id in processed_motion_ids:
-                        continue
+                        await nova_bridge.log_collision_scenes()
 
-                    trajectory = await motion_api.get_motion_trajectory(
-                        "cell", motion_id, int(RECORDING_INTERVAL * 1000)
-                    )
+                        # Configure logging blueprints only if motion_group_list has changed
+                        motion_groups = await motion_group_api.list_motion_groups("cell")
+                        motion_group_list = [
+                            active_motion_group.motion_group
+                            for active_motion_group in motion_groups.instances
+                        ]
+                        if motion_group_list != previous_motion_group_list:
+                            await nova_bridge.setup_blueprint()
+                            previous_motion_group_list = motion_group_list
 
-                    # Calculate time offset
-                    processed_motions = load_processed_motions()
-                    time_offset = sum(m[1] for m in processed_motions)
-                    trajectory_time = trajectory.trajectory[-1].time
-                    print(f"Time offset: {time_offset}", flush=True)
+                        if motion_id in processed_motion_ids:
+                            continue
 
-                    await nova_bridge.log_motion(motion_id=motion_id, time_offset=time_offset)
+                        trajectory = await motion_api.get_motion_trajectory(
+                            "cell", motion_id, int(RECORDING_INTERVAL * 1000)
+                        )
 
-                    # Save the processed motion ID and trajectory time
-                    save_processed_motion(motion_id, trajectory_time)
+                        # Calculate time offset
+                        processed_motions = load_processed_motions()
+                        time_offset = sum(m[1] for m in processed_motions)
+                        trajectory_time = trajectory.trajectory[-1].time
+                        print(f"Time offset: {time_offset}", flush=True)
+
+                        await nova_bridge.log_motion(motion_id=motion_id, time_offset=time_offset)
+
+                        # Save the processed motion ID and trajectory time
+                        save_processed_motion(motion_id, trajectory_time)
 
         except Exception as e:
             print(f"Error during job execution: {e}", flush=True)
