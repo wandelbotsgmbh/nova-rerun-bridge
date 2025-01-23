@@ -10,7 +10,7 @@ from nova_rerun_bridge import NovaRerunBridge
 async def test():
     async with Nova() as nova, NovaRerunBridge(nova) as bridge:
         await bridge.setup_blueprint()
-        await bridge.fetch_and_log_collision_scenes()
+        await bridge.log_collision_scenes()
 
         cell = nova.cell()
         controllers = await cell.controllers()
