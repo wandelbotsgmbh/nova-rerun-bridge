@@ -1,4 +1,4 @@
-FROM container-registry.wabo.run/docker-hub/library/python:3.11-slim AS builder
+FROM python:3.11-slim AS builder
 
 RUN pip install --upgrade pip \
     && pip install poetry==1.8.3
@@ -14,7 +14,7 @@ COPY pyproject.toml poetry.lock ./
 
 RUN --mount=type=cache,target=$POETRY_CACHE_DIR poetry install --no-root -vvv
 
-FROM container-registry.wabo.run/docker-hub/library/python:3.11-slim AS runtime
+FROM python:3.11-slim AS runtime
 
 RUN apt-get update && apt-get install -y nginx gettext-base libnginx-mod-stream
 
@@ -26,7 +26,6 @@ COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
 WORKDIR /app
 COPY nginx.conf /etc/nginx/nginx.conf
 COPY nginx.http.conf.template .
-COPY src src
 COPY static static
 
 COPY models models

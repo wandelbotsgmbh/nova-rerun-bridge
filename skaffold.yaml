@@ -10,6 +10,8 @@ build:
         dockerfile: Dockerfile
         buildArgs:
           platform: "linux/amd64"
+  local:
+    useBuildkit: true
 manifests:
   kustomize:
     paths:
