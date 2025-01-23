@@ -65,7 +65,7 @@ await bridge.log_trajectory(joint_trajectory, tcp, motion_group)
 
 ```python
 # Log collision scenes
-await bridge.fetch_and_log_collision_scenes()
+await bridge.log_collision_scenes()
 ```
 
 ### Stream current robot state

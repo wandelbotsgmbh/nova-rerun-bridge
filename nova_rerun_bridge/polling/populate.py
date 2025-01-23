@@ -52,7 +52,7 @@ async def process_motions():
 
                 for motion_id in new_motions:
                     print(f"Processing motion {motion_id}.", flush=True)
-                    await nova_bridge.fetch_and_log_collision_scenes()
+                    await nova_bridge.log_collision_scenes()
 
                     # Configure logging blueprints only if motion_group_list has changed
                     motion_groups = await motion_group_api.list_motion_groups("cell")
