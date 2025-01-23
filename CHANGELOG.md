@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.14.0 (2025-01-23)
+
+### Features
+
+- Fixes docker and skaffold builds
+  ([`ea64d48`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/ea64d48afe98d35a33199b1459505721f7e74b05))
+
+
 ## v0.13.1 (2025-01-22)
 
 ### Bug Fixes
