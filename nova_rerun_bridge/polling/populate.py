@@ -53,7 +53,6 @@ async def process_motions():
                     async with NovaRerunBridge(
                         nova, spawn=True, recording_id="nova_live"
                     ) as nova_bridge:
-                        await nova_bridge.setup_blueprint()
                         print(f"Processing motion {motion_id}.", flush=True)
                         rr.set_time_seconds(TIME_INTERVAL_NAME, time_offset)
 
