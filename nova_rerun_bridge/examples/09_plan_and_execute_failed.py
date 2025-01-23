@@ -46,7 +46,7 @@ async def test():
                 await bridge.log_trajectory(joint_trajectory, tcp, motion_group)
                 await motion_group.execute(joint_trajectory, tcp, actions=actions)
             except PlanTrajectoryFailed as e:
-                await bridge.log_actions(actions)
+                await bridge.log_actions(actions, show_connection=True)
                 await bridge.log_trajectory(e.error.joint_trajectory, tcp, motion_group)
                 await bridge.log_error_feedback(e.error.error_feedback)
                 return

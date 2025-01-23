@@ -47,12 +47,12 @@ class NovaRerunBridge:
         spawn (bool, optional): Whether to spawn Rerun viewer. Defaults to True.
     """
 
-    def __init__(self, nova: Nova, spawn: bool = True) -> None:
+    def __init__(self, nova: Nova, spawn: bool = True, recording_id=None) -> None:
         self._ensure_models_exist()
         self.nova = nova
         self._streaming_tasks = {}
         if spawn:
-            recording_id = f"nova_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+            recording_id = recording_id or f"nova_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
             rr.init(application_id="nova", recording_id=recording_id, spawn=True)
         logger.add(sink=rr.LoggingHandler("logs/handler"))
 
