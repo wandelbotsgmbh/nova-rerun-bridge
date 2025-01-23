@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.14.1 (2025-01-23)
+
+### Bug Fixes
+
+- Use lib in skaffold
+  ([`07ebb63`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/07ebb637b38a30376d1767c49645ce3f046121fc))
+
+
 ## v0.14.0 (2025-01-23)
 
 ### Features
