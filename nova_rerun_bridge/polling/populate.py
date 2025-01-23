@@ -23,7 +23,10 @@ async def process_motions():
     global first_run
     global previous_motion_group_list
 
-    async with Nova() as nova, NovaRerunBridge(nova) as nova_bridge:
+    async with (
+        Nova() as nova,
+        NovaRerunBridge(nova, spawn=True, recording_id="nova_live") as nova_bridge,
+    ):
         motion_api = nova._api_client.motion_api
         motion_group_api = nova._api_client.motion_group_api
 
