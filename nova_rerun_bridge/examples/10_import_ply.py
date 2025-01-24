@@ -13,6 +13,10 @@ from nova_rerun_bridge.consts import TIME_INTERVAL_NAME
 
 
 async def test():
+    """
+    This example demonstrates how to import a PLY file and extract point cloud data.
+    We choose the first green point and move the robot to it.
+    """
     async with Nova() as nova, NovaRerunBridge(nova) as bridge:
         await bridge.setup_blueprint()
 
@@ -22,24 +26,16 @@ async def test():
         # Extract vertex positions and colors
         positions = np.array(mesh.vertices)
 
-        # Create rotation matrix for 180 degrees around X axis
+        # Point cloud is oriented in a way that it needs to be rotated and translated
         rotation = np.array([[1, 0, 0], [0, -1, 0], [0, 0, -1]])
-
-        # Apply rotation to positions
         positions = positions @ rotation
-
-        # Apply translation [x, y, z]
         translation = np.array([0, -500, 1200])
         positions = positions + translation
 
-        # If colors exist in the PLY, use them, otherwise use default color
-        if hasattr(mesh.visual, "vertex_colors"):
-            colors = mesh.visual.vertex_colors[:, :3]  # RGB only, drop alpha
-        else:
-            colors = np.ones_like(positions) * 128  # Default gray color
+        colors = mesh.visual.vertex_colors[:, :3]  # RGB only, drop alpha
 
+        # Log point cloud
         rr.set_time_seconds(TIME_INTERVAL_NAME, 0)
-        # Log points to rerun
         rr.log("motion/pointcloud", rr.Points3D(positions, colors=colors))
 
         # Find green points (high G, low R/B values)
@@ -51,7 +47,9 @@ async def test():
             return
 
         # Select first green point
-        target_point = green_points[0]
+        green_target_point = green_points[0]
+
+        rr.log("motion/target", rr.Points3D([green_target_point], radii=[10], colors=[[0, 255, 0]]))
 
         cell = nova.cell()
         controllers = await cell.controllers()
@@ -63,11 +61,10 @@ async def test():
             tcp_names = await motion_group.tcp_names()
             tcp = tcp_names[0]
 
-            actions = [
-                jnt(home_joints),
-                ptp(Pose((target_point[0], target_point[1], target_point[2], np.pi, 0, 0))),
-                jnt(home_joints),
-            ]
+            greenTargetPose = Pose(
+                (green_target_point[0], green_target_point[1], green_target_point[2], np.pi, 0, 0)
+            )
+            actions = [jnt(home_joints), ptp(greenTargetPose), jnt(home_joints)]
 
             # you can update the settings of the action
             for action in actions:
