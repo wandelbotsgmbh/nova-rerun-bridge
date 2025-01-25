@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.15.0 (2025-01-25)
+
+### Features
+
+- Push image to azure
+  ([`23017a8`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/23017a82aef8b1de26a384c2e58ec4efdf1256ed))
+
+
 ## v0.14.1 (2025-01-23)
 
 ### Bug Fixes
