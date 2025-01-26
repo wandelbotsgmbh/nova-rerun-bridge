@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.15.2 (2025-01-26)
+
+### Bug Fixes
+
+- Add dockerignore
+  ([`bf69000`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/bf69000d558bed49e24f6f294541a6befe11cb41))
+
+
 ## v0.15.1 (2025-01-25)
 
 ### Bug Fixes
