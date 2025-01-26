@@ -23,7 +23,7 @@ async def process_motions():
     global first_run
     global previous_motion_group_list
 
-    async with Nova() as nova:
+    async with Nova(verify_ssl=False) as nova:
         motion_api = nova._api_client.motion_api
         motion_group_api = nova._api_client.motion_group_api
 

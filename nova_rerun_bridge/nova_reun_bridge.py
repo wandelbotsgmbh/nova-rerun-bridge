@@ -229,7 +229,7 @@ class NovaRerunBridge:
             rr.Points3D(
                 positions,
                 colors=[colors.colors[0]] * len(positions),  # Green points
-                radii=rr.Radius.ui_points([1.0]) * len(positions),
+                radii=rr.Radius.ui_points([5.0]),
             ),
             timeless=True,
             static=True,
