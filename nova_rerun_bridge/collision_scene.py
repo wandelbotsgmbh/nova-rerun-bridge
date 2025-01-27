@@ -43,9 +43,9 @@ def log_colliders_once(entity_path: str, colliders: Dict[str, models.Collider]):
                 rr.Boxes3D(
                     centers=[[pose.position.x, pose.position.y, pose.position.z]],
                     half_sizes=[
-                        collider.shape.actual_instance.size_x,
-                        collider.shape.actual_instance.size_y,
-                        collider.shape.actual_instance.size_z,
+                        collider.shape.actual_instance.size_x / 2,
+                        collider.shape.actual_instance.size_y / 2,
+                        collider.shape.actual_instance.size_z / 2,
                     ],
                     colors=[(221, 193, 193, 255)],
                 ),
