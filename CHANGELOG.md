@@ -1,6 +1,71 @@
 # CHANGELOG
 
 
+## v0.15.3 (2025-01-27)
+
+### Bug Fixes
+
+- Use fixed host on catalog app
+  ([`81d2b9f`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/81d2b9fb48b1a261d299188e5aebd3f663af7be8))
+
+### Build System
+
+- **deps**: Bump docker/build-push-action from 5 to 6
+  ([`7ba4fec`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/7ba4fec2b0f0f6618c5120b94fed49cb50d3c772))
+
+Bumps [docker/build-push-action](https://github.com/docker/build-push-action) from 5 to 6. -
+  [Release notes](https://github.com/docker/build-push-action/releases) -
+  [Commits](https://github.com/docker/build-push-action/compare/v5...v6)
+
+--- updated-dependencies: - dependency-name: docker/build-push-action dependency-type:
+  direct:production
+
+update-type: version-update:semver-major
+
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+
+- **deps**: Bump python-semantic-release/publish-action
+  ([`fe82a91`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/fe82a91f9f3eba9700828ddf5bdbb43ce6d7dddb))
+
+Bumps
+  [python-semantic-release/publish-action](https://github.com/python-semantic-release/publish-action)
+  from 9.16.1 to 9.17.0. - [Release
+  notes](https://github.com/python-semantic-release/publish-action/releases) -
+  [Changelog](https://github.com/python-semantic-release/publish-action/blob/main/releaserc.toml) -
+  [Commits](https://github.com/python-semantic-release/publish-action/compare/v9.16.1...v9.17.0)
+
+--- updated-dependencies: - dependency-name: python-semantic-release/publish-action dependency-type:
+  direct:production
+
+update-type: version-update:semver-minor
+
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+
+- **deps**: Bump python-semantic-release/python-semantic-release
+  ([`5456cd2`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/5456cd2104dcd335769d3459404919e493d90d4c))
+
+Bumps
+  [python-semantic-release/python-semantic-release](https://github.com/python-semantic-release/python-semantic-release)
+  from 9.16.1 to 9.17.0. - [Release
+  notes](https://github.com/python-semantic-release/python-semantic-release/releases) -
+  [Changelog](https://github.com/python-semantic-release/python-semantic-release/blob/master/CHANGELOG.rst)
+  -
+  [Commits](https://github.com/python-semantic-release/python-semantic-release/compare/v9.16.1...v9.17.0)
+
+--- updated-dependencies: - dependency-name: python-semantic-release/python-semantic-release
+  dependency-type: direct:production
+
+update-type: version-update:semver-minor
+
+...
+
+Signed-off-by: dependabot[bot] <support@github.com>
+
+
 ## v0.15.2 (2025-01-26)
 
 ### Bug Fixes
