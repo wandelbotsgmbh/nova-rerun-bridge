@@ -1,6 +1,22 @@
 # CHANGELOG
 
 
+## v0.17.0 (2025-01-27)
+
+### Bug Fixes
+
+- Trigger pipeline
+  ([`3e5be44`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/3e5be44ed9006cadb47d01cccb983008deda6046))
+
+- Use half sizes for box object
+  ([`08f59b7`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/08f59b7c3f329e853de4345be973c184efa4dcb4))
+
+### Features
+
+- Trigger pipeline
+  ([`aa3f60b`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/aa3f60be432667b0dce8948aba6871ccc39cc13d))
+
+
 ## v0.16.0 (2025-01-27)
 
 ### Features
