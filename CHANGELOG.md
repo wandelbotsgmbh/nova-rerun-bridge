@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.18.0 (2025-01-27)
+
+### Features
+
+- Use correct box sizes
+  ([`058c1e8`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/058c1e8ad0b8fc543bb9da2fb4a4d2cf1a9dc77b))
+
+
 ## v0.17.0 (2025-01-27)
 
 ### Bug Fixes
