@@ -23,7 +23,9 @@ async def process_motions():
     global first_run
     global previous_motion_group_list
 
-    async with Nova(verify_ssl=False) as nova:
+    async with Nova(
+        host="http://api-gateway.wandelbots.svc.cluster.local:8080", verify_ssl=False
+    ) as nova:
         motion_api = nova._api_client.motion_api
         motion_group_api = nova._api_client.motion_group_api
 
