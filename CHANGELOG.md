@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.16.0 (2025-01-27)
+
+### Features
+
+- Only push image on successfull release
+  ([`20e3bda`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/20e3bdae1f01e239dea47a245f9907d2aa0a92c9))
+
+
 ## v0.15.3 (2025-01-27)
 
 ### Bug Fixes
