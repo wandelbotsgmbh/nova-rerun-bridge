@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.19.0 (2025-01-28)
+
+### Features
+
+- Correct tcp collision geometry transform
+  ([`d069c4f`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/d069c4f183f4ae342ca0a1a85be24e58ab38b13f))
+
+
 ## v0.18.0 (2025-01-27)
 
 ### Features
