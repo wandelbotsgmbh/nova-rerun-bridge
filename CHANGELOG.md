@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.20.0 (2025-01-28)
+
+### Features
+
+- Trigger pipeline
+  ([`1102a9b`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/1102a9b8386b0fa785c636c975d4cf7c98457191))
+
+
 ## v0.19.0 (2025-01-28)
 
 ### Features
