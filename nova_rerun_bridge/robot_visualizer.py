@@ -590,10 +590,15 @@ class RobotVisualizer:
                     entity_path = f"{self.base_entity_path}/collision/tcp/geometry_{geom_id}"
 
                     pose = normalize_pose(self.collision_tcp_geometries[geom_id].pose)
-
                     final_transform = tcp_transform @ self.geometry_pose_to_matrix(pose)
+
+                    # tcp collision geometries are defined in flange frame
+                    identity_pose = models.PlannerPose(
+                        position=models.Vector3d(x=0, y=0, z=0),
+                        orientation=models.Quaternion(x=0, y=0, z=0, w=1),
+                    )
                     self.init_collision_geometry(
-                        entity_path, self.collision_tcp_geometries[geom_id], pose
+                        entity_path, self.collision_tcp_geometries[geom_id], identity_pose
                     )
                     collect_geometry_data(entity_path, final_transform)
 
