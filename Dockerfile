@@ -10,9 +10,11 @@ ENV POETRY_NO_INTERACTION=1 \
 
 WORKDIR /app
 
-COPY pyproject.toml poetry.lock ./
+# Copy entire project first
+COPY . .
 
-RUN --mount=type=cache,target=$POETRY_CACHE_DIR poetry install --no-root -vvv
+# Install dependencies including the local package
+RUN --mount=type=cache,target=$POETRY_CACHE_DIR poetry install --no-dev
 
 FROM python:3.11-slim AS runtime
 
@@ -27,13 +29,10 @@ WORKDIR /app
 COPY nginx.conf /etc/nginx/nginx.conf
 COPY nginx.http.conf.template .
 COPY static static
-
 COPY models models
 COPY nova_rerun_bridge nova_rerun_bridge
-
-RUN pip install nova-rerun-bridge
-
 COPY start.sh /app/start.sh
+
 RUN chmod +x /app/start.sh
 
 ENTRYPOINT ["/app/start.sh"]
