@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.21.0 (2025-01-29)
+
+### Features
+
+- Update Dockerfile to copy entire project and install dependencies without dev packages
+  ([`63043ba`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/63043ba7aaa71fad1ec8072197264d3f7b9ed113))
+
+
 ## v0.20.0 (2025-01-28)
 
 ### Features
