@@ -1,5 +1,6 @@
 import asyncio
 
+import aiohttp
 import rerun as rr
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
@@ -15,6 +16,27 @@ first_run = True
 previous_motion_group_list = []
 
 
+async def get_protocol(host) -> str:
+    api = "/api/v1/cells/cell/controllers"
+
+    async with aiohttp.ClientSession() as session:
+        try:
+            async with session.get(f"https://{host}{api}", timeout=5) as response:
+                if response.status == 200:
+                    return "https://"
+        except aiohttp.ClientError:
+            pass
+
+        try:
+            async with session.get(f"http://{host}{api}", timeout=5) as response:
+                if response.status == 200:
+                    return "http://"
+        except aiohttp.ClientError:
+            pass
+
+    return None
+
+
 async def process_motions():
     """
     Fetch and process all unprocessed motions.
@@ -23,8 +45,10 @@ async def process_motions():
     global first_run
     global previous_motion_group_list
 
+    protocol = await get_protocol("api-gateway.wandelbots.svc.cluster.local:8080")
+
     async with Nova(
-        host="http://api-gateway.wandelbots.svc.cluster.local:8080", verify_ssl=False
+        host=f"{protocol}api-gateway.wandelbots.svc.cluster.local:8080", verify_ssl=False
     ) as nova:
         motion_api = nova._api_client.motion_api
         motion_group_api = nova._api_client.motion_group_api
