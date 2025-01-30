@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.22.4 (2025-01-30)
+
+### Bug Fixes
+
+- Update WebSocket protocol condition to use BASE_PATH for secure domains
+  ([`8ced059`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/8ced059bb81e6342d2efd0d6d6bf71cd9550a7c0))
+
+
 ## v0.22.3 (2025-01-30)
 
 ### Bug Fixes
