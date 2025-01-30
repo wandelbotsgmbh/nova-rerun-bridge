@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.22.8 (2025-01-30)
+
+### Bug Fixes
+
+- Update nginx configuration to allow dynamic BASE_PATH location
+  ([`91e041b`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/91e041b6d25a28287fd5920e15d08ec68fdd5c7b))
+
+
 ## v0.22.7 (2025-01-30)
 
 ### Bug Fixes
