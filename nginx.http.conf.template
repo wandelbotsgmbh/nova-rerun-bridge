@@ -10,7 +10,7 @@ server {
         return 301 $scheme://$http_host$BASE_PATH/?url=wss://$http_host$BASE_PATH/ws/;
     }
 
-    location $BASE_PATH {
+    location ~ ^/ {
         return 301 $scheme://$http_host$BASE_PATH/?url=ws://$http_host$BASE_PATH/ws/;
     }
 
