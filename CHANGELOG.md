@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.22.13 (2025-01-30)
+
+### Bug Fixes
+
+- Remove redundant websocket protocol condition for improved clarity
+  ([`b03b608`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/b03b608a948af12a94a397019f3fb0cc712f9533))
+
+
 ## v0.22.12 (2025-01-30)
 
 ### Bug Fixes
