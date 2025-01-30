@@ -7,7 +7,11 @@ server {
     }
 
     location = $BASE_PATH {
-        return 301 $scheme://$http_host$BASE_PATH/?url=ws://$http_host$BASE_PATH/ws/;
+        set $ws_protocol "ws";
+        if ($scheme = "https") {
+            set $ws_protocol "wss";
+        }
+        return 301 $scheme://$http_host$BASE_PATH/?url=$ws_protocol://$http_host$BASE_PATH/ws/;
     }
 
     location = $BASE_PATH/ws {
