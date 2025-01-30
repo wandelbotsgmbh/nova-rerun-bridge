@@ -11,6 +11,9 @@ server {
         if ($http_host ~ "\.wandelbots\.io$") {
             set $ws_protocol "wss";
         }
+        if ($scheme = "https") {
+            set $ws_protocol "wss";
+        }
         return 301 $scheme://$http_host$BASE_PATH/?url=$ws_protocol://$http_host$BASE_PATH/ws/;
     }
 
