@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.22.12 (2025-01-30)
+
+### Bug Fixes
+
+- Update websocket protocol condition for improved host matching
+  ([`91bcec3`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/91bcec347c72709174f904ea5e09fd5057c6534c))
+
+
 ## v0.22.11 (2025-01-30)
 
 ### Bug Fixes
