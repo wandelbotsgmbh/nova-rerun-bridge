@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.22.9 (2025-01-30)
+
+### Bug Fixes
+
+- Update nginx configuration to use regex for BASE_PATH location
+  ([`316e5b6`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/316e5b6960fb6d9551449c3d604b348aece4ec34))
+
+
 ## v0.22.8 (2025-01-30)
 
 ### Bug Fixes

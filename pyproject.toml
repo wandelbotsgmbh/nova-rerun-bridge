@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "nova-rerun-bridge"
-version = "0.22.8"
+version = "0.22.9"
 description = "Visualizes the state of your nova instance inside of [rerun.io](https://rerun.io). This is intended to be used alongside the [nova python lib](https://github.com/wandelbotsgmbh/wandelbots-nova)."
 authors = [
     "Wandelbots GmbH",
