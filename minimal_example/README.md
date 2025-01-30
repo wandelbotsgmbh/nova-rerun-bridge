@@ -21,5 +21,5 @@ test_rerun/
    ```
 4. Run the `test.py` script:
    ```sh
-   python test.py
+   poetry run python test.py
    ```
