@@ -6,7 +6,7 @@ server {
         try_files /app_icon.png =404;
     }
 
-    location ~ ^/.*\.wandelbots\.io/ {
+    location ^~ /.*\.wandelbots\.io/ {
         return 301 $scheme://$http_host$BASE_PATH/?url=wss://$http_host$BASE_PATH/ws/;
     }
 
