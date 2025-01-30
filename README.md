@@ -16,9 +16,11 @@ https://github.com/user-attachments/assets/ab527bc4-720a-41f2-9499-54d6ed027163
 
 ## 🚀 Quick Start
 
+Check out the [minimal example](https://github.com/wandelbotsgmbh/nova-rerun-bridge/tree/main/minimal_example):
+
 ```bash
 # Install the package
-poetry install nova-rerun-bridge
+poetry install
 
 # Download required robot models
 poetry run download-models
