@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.22.10 (2025-01-30)
+
+### Bug Fixes
+
+- Update nginx configuration to dynamically set protocol for websocket connections
+  ([`0fe0ad1`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/0fe0ad15536a841dbeadf564f7f1e7c11bf376df))
+
+
 ## v0.22.9 (2025-01-30)
 
 ### Bug Fixes
