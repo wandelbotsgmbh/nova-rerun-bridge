@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.22.5 (2025-01-30)
+
+### Bug Fixes
+
+- Streamline WebSocket protocol handling for wandelbots.io base path
+  ([`e1de412`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/e1de412772d17cd9fb6c4bb5b782205e78051113))
+
+
 ## v0.22.4 (2025-01-30)
 
 ### Bug Fixes
