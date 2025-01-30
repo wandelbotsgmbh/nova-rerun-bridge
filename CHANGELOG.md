@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.22.3 (2025-01-30)
+
+### Bug Fixes
+
+- Enhance WebSocket protocol handling for secure domains
+  ([`c1f3a0c`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/c1f3a0c82b836fed3836091a9fddaed9f654829b))
+
+
 ## v0.22.2 (2025-01-30)
 
 ### Bug Fixes
