@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.22.2 (2025-01-30)
+
+### Bug Fixes
+
+- Update WebSocket protocol handling in nginx configuration
+  ([`212631b`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/212631b450a621b43aec7739b5c973a84c2ea5f1))
+
+
 ## v0.22.1 (2025-01-30)
 
 ### Bug Fixes
