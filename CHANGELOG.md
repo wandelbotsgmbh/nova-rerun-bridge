@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.22.6 (2025-01-30)
+
+### Bug Fixes
+
+- Update redirect handling for wandelbots.io base path in nginx configuration
+  ([`cd6bcd4`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/cd6bcd48f85b01d164898c30410c85d87edacaa2))
+
+
 ## v0.22.5 (2025-01-30)
 
 ### Bug Fixes
