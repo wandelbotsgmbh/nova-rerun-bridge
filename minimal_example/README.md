@@ -13,7 +13,7 @@ test_rerun/
 ## Running the Example
 
 1. Ensure you have the required dependencies installed with `poetry install`
-2. Download the robot models by running `poetry run download_models`
+2. Download the robot models by running `poetry run download-models`
 3. Add an .env file with the necessary environment variables:
    ```sh
    NOVA_API=<your-url-instance>

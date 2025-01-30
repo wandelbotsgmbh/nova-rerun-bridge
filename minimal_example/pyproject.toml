@@ -1,6 +1,7 @@
 [tool.poetry]
 name = "Minimal Example Nova Rerun Bridge"
 version = "0.0.1"
+package-mode = false
 description = "Minimal example of a project using the nova_rerun_bridge"
 authors = [
     "Wandelbots GmbH",
@@ -12,7 +13,7 @@ readme = "README.md"
 python = "^3.10"
 rerun-sdk = "^0.21.0"
 wandelbots-nova = ">=0.12"
-nova_rerun_bridge = ">=0.1"
+nova_rerun_bridge = "^0.22.1"
 python-decouple = "^3.8"
 requests = "^2.32.3"
 APScheduler = "^3.11.0"
