@@ -8,6 +8,9 @@ server {
 
     location = $BASE_PATH {
         set $ws_protocol "ws";
+        if ($http_host ~ "wandelbots.io") {
+            set $ws_protocol "wss";
+        }
         if ($scheme = "https") {
             set $ws_protocol "wss";
         }
