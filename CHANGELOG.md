@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.22.14 (2025-01-30)
+
+### Bug Fixes
+
+- Ensure websocket protocol is set to wss for HTTPS requests
+  ([`7397261`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/7397261671c5d97a9033cc7edb0d6bbbe7161378))
+
+
 ## v0.22.13 (2025-01-30)
 
 ### Bug Fixes
