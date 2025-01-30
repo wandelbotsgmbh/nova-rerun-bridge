@@ -6,12 +6,11 @@ server {
         try_files /app_icon.png =404;
     }
 
-    location ^~ /.*\.wandelbots\.io/ {
-        return 301 $scheme://$http_host$BASE_PATH/?url=wss://$http_host$BASE_PATH/ws/;
-    }
+    location = $BASE_PATH {
+        set $prot = "ws"; 
+        if ($BASE_PATH ~ /.*\.wandelbots\.io/) { set $prot "wss"; }
 
-    location ~ ^/ {
-        return 301 $scheme://$http_host$BASE_PATH/?url=ws://$http_host$BASE_PATH/ws/;
+        return 301 $scheme://$http_host$BASE_PATH/?url=$prot://$http_host$BASE_PATH/ws/;
     }
 
     location = $BASE_PATH/ws {
