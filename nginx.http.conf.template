@@ -7,10 +7,14 @@ server {
     }
 
     location = $BASE_PATH {
-        set $prot = "ws"; 
-        if ($BASE_PATH ~ /.*\.wandelbots\.io/) { set $prot "wss"; }
-
-        return 301 $scheme://$http_host$BASE_PATH/?url=$prot://$http_host$BASE_PATH/ws/;
+        set $ws_protocol "ws";
+        if ($BASE_PATH ~ /.*\.wandelbots\.io/) {
+            set $ws_protocol "wss";
+        }
+        if ($scheme == "https") {
+            set $ws_protocol "wss";
+        }
+        return 301 $scheme://$http_host$BASE_PATH/?url=$ws_protocol://$http_host$BASE_PATH/ws/;
     }
 
     location = $BASE_PATH/ws {
