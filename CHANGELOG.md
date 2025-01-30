@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.22.0 (2025-01-30)
+
+### Features
+
+- Add async protocol detection for API gateway connection
+  ([`abde59f`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/abde59fd40ab0cc3f11b12834cd79076e8c73d9f))
+
+
 ## v0.21.0 (2025-01-29)
 
 ### Features
