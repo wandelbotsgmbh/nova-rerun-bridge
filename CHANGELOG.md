@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.22.1 (2025-01-30)
+
+### Bug Fixes
+
+- Remove unused protocol detection logic in populate.py
+  ([`f597bfb`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/f597bfba59a982a9308620eb5f56b9716cbf1ac2))
+
+
 ## v0.22.0 (2025-01-30)
 
 ### Features
