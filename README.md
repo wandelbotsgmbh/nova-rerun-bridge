@@ -184,6 +184,6 @@ socat TCP4-LISTEN:6666,fork SYSTEM:"curl -X POST -d @- http://172.30.2.224/some/
 { echo "load_module /usr/lib/nginx/modules/ngx_stream_module.so;"; cat /etc/nginx/nginx.conf; } > temp_file && mv temp_file /etc/nginx/nginx.conf
 ```
 
-# 📝 License
+## 📝 License
 
 This project is licensed under the Apache 2.0 License - see the LICENSE file for details.
