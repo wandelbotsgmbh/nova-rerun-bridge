@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.23.0 (2025-01-31)
+
+### Features
+
+- Update robots, external axis example
+  ([`5cbd9ee`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/5cbd9eed71957bc751cbd935014f77f928a7a685))
+
+
 ## v0.22.16 (2025-01-31)
 
 ### Bug Fixes
