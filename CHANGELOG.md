@@ -1,6 +1,118 @@
 # CHANGELOG
 
 
+## v0.22.14 (2025-01-30)
+
+### Bug Fixes
+
+- Ensure websocket protocol is set to wss for HTTPS requests
+  ([`7397261`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/7397261671c5d97a9033cc7edb0d6bbbe7161378))
+
+
+## v0.22.13 (2025-01-30)
+
+### Bug Fixes
+
+- Remove redundant websocket protocol condition for improved clarity
+  ([`b03b608`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/b03b608a948af12a94a397019f3fb0cc712f9533))
+
+
+## v0.22.12 (2025-01-30)
+
+### Bug Fixes
+
+- Update websocket protocol condition for improved host matching
+  ([`91bcec3`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/91bcec347c72709174f904ea5e09fd5057c6534c))
+
+
+## v0.22.11 (2025-01-30)
+
+### Bug Fixes
+
+- Enhance websocket protocol handling in nginx configuration
+  ([`a449457`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/a449457916e132acc6fc2185fda9bc87e96bb053))
+
+
+## v0.22.10 (2025-01-30)
+
+### Bug Fixes
+
+- Update nginx configuration to dynamically set protocol for websocket connections
+  ([`0fe0ad1`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/0fe0ad15536a841dbeadf564f7f1e7c11bf376df))
+
+
+## v0.22.9 (2025-01-30)
+
+### Bug Fixes
+
+- Update nginx configuration to use regex for BASE_PATH location
+  ([`316e5b6`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/316e5b6960fb6d9551449c3d604b348aece4ec34))
+
+
+## v0.22.8 (2025-01-30)
+
+### Bug Fixes
+
+- Update nginx configuration to allow dynamic BASE_PATH location
+  ([`91e041b`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/91e041b6d25a28287fd5920e15d08ec68fdd5c7b))
+
+
+## v0.22.7 (2025-01-30)
+
+### Bug Fixes
+
+- Update nginx configuration to improve redirect handling for wandelbots.io
+  ([`934bbf1`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/934bbf13b7252e25d4c65276c1160fad66059c9f))
+
+
+## v0.22.6 (2025-01-30)
+
+### Bug Fixes
+
+- Update redirect handling for wandelbots.io base path in nginx configuration
+  ([`cd6bcd4`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/cd6bcd48f85b01d164898c30410c85d87edacaa2))
+
+
+## v0.22.5 (2025-01-30)
+
+### Bug Fixes
+
+- Streamline WebSocket protocol handling for wandelbots.io base path
+  ([`e1de412`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/e1de412772d17cd9fb6c4bb5b782205e78051113))
+
+
+## v0.22.4 (2025-01-30)
+
+### Bug Fixes
+
+- Update WebSocket protocol condition to use BASE_PATH for secure domains
+  ([`8ced059`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/8ced059bb81e6342d2efd0d6d6bf71cd9550a7c0))
+
+
+## v0.22.3 (2025-01-30)
+
+### Bug Fixes
+
+- Enhance WebSocket protocol handling for secure domains
+  ([`c1f3a0c`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/c1f3a0c82b836fed3836091a9fddaed9f654829b))
+
+
+## v0.22.2 (2025-01-30)
+
+### Bug Fixes
+
+- Update WebSocket protocol handling in nginx configuration
+  ([`212631b`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/212631b450a621b43aec7739b5c973a84c2ea5f1))
+
+
+## v0.22.1 (2025-01-30)
+
+### Bug Fixes
+
+- Remove unused protocol detection logic in populate.py
+  ([`f597bfb`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/f597bfba59a982a9308620eb5f56b9716cbf1ac2))
+
+
 ## v0.22.0 (2025-01-30)
 
 ### Features
