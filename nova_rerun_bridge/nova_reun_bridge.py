@@ -77,7 +77,7 @@ class NovaRerunBridge:
             return
 
         for controller in controllers:
-            async with controller[0] as motion_group:
+            for motion_group in await controller.activated_motion_groups():
                 motion_groups.append(motion_group.motion_group_id)
 
         send_blueprint(motion_groups)
