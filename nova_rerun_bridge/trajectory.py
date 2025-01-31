@@ -61,6 +61,15 @@ def log_motion(
         _last_end_time = time_offset
 
     # Initialize DHRobot and Visualizer
+    if model_from_controller == "Yaskawa_TURN2":
+        optimizer_config.dh_parameters[1].d = 360
+        # optimizer_config.dh_parameters[1].alpha = np.pi / 2
+        # optimizer_config.dh_parameters[1].theta = np.pi / 2
+
+        optimizer_config.dh_parameters[1].theta = 0
+        optimizer_config.dh_parameters[0].alpha = 0
+        optimizer_config.dh_parameters[1].alpha = 0
+
     robot = DHRobot(optimizer_config.dh_parameters, optimizer_config.mounting)
 
     collision_link_chain, collision_tcp = extract_link_chain_and_tcp(collision_scenes)
@@ -213,7 +222,7 @@ def log_joint_data(
     Log joint-related data (position, velocity, acceleration, torques) from a trajectory as columns.
     """
     # Initialize lists for each joint and each data type (assuming 6 joints)
-    num_joints = 6
+    num_joints = len(optimizer_config.dh_parameters)
     joint_data = {
         "velocity": [[] for _ in range(num_joints)],
         "acceleration": [[] for _ in range(num_joints)],

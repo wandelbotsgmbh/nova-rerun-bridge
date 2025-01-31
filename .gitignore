@@ -178,4 +178,4 @@ Chart.lock
 
 # test files
 *PointCloud-cropped-0.ply
-models
+minimal_example/models
