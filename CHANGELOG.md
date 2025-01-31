@@ -1,6 +1,17 @@
 # CHANGELOG
 
 
+## v0.22.16 (2025-01-31)
+
+### Bug Fixes
+
+- Don't activate motion groups
+  ([`6def1ed`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/6def1edf29489fd67f3b015a01ac3946b1e82421))
+
+- Update Nova host to use production instance URL
+  ([`1400d82`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/1400d82a36888bc6b3b05a340f37344dafeffcf5))
+
+
 ## v0.22.15 (2025-01-31)
 
 
