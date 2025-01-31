@@ -27,6 +27,12 @@ poetry run download-models
 ```
 
 ```python
+# Add credentials and instance to .env file
+NOVA_API="https://MY_INSTANCE.instance.wandelbots.io"
+NOVA_ACCESS_TOKEN="MY_ACCESS_TOKEN"
+```
+
+```python
 from nova_rerun_bridge import NovaRerunBridge
 from nova import Nova
 
