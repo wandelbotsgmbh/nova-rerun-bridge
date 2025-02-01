@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.24.0 (2025-02-01)
+
+### Features
+
+- Add external axis example
+  ([`9e286e6`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/9e286e648abb061c5b045e36122f4ce6888d72b5))
+
+
 ## v0.23.1 (2025-02-01)
 
 ### Bug Fixes
