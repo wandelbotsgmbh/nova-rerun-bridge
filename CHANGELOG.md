@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.23.1 (2025-02-01)
+
+### Bug Fixes
+
+- Prevent index error in robot joint transformations
+  ([`3742627`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/3742627759eb07bf2362a63b53150f539a8e610d))
+
+
 ## v0.23.0 (2025-01-31)
 
 ### Features
