@@ -62,13 +62,15 @@ def log_motion(
 
     # Initialize DHRobot and Visualizer
     if model_from_controller == "Yaskawa_TURN2":
-        optimizer_config.dh_parameters[1].d = 360
-        # optimizer_config.dh_parameters[1].alpha = np.pi / 2
-        # optimizer_config.dh_parameters[1].theta = np.pi / 2
+        optimizer_config.dh_parameters[0].a = 0
+        optimizer_config.dh_parameters[0].d = 360
+        optimizer_config.dh_parameters[0].alpha = np.pi / 2
+        optimizer_config.dh_parameters[0].theta = 0
 
-        optimizer_config.dh_parameters[1].theta = 0
-        optimizer_config.dh_parameters[0].alpha = 0
+        optimizer_config.dh_parameters[1].a = 0
+        optimizer_config.dh_parameters[1].d = 0
         optimizer_config.dh_parameters[1].alpha = 0
+        optimizer_config.dh_parameters[1].theta = np.pi / 2
 
     robot = DHRobot(optimizer_config.dh_parameters, optimizer_config.mounting)
 

@@ -29,7 +29,7 @@ async def test():
                 for action in [
                     ptp(home),
                     Linear(target=Pose((50, 20, 30, 0, 0, 0)) @ home),
-                    Linear(target=Pose((400, 20, 30, 0, 0, 0)) @ home),
+                    Linear(target=Pose((100, 20, 30, 0, 0, 0)) @ home),
                     Linear(target=Pose((50, 20, 30, 0, 0, 0)) @ home),
                     ptp(home),
                 ]
