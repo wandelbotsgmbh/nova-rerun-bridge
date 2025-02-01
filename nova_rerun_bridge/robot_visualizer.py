@@ -510,6 +510,8 @@ class RobotVisualizer:
             # Log robot joint geometries
             if self.mesh_loaded:
                 for link_index, joint_name in enumerate(self.joint_names):
+                    if link_index >= len(transforms):
+                        break
                     link_transform = transforms[link_index]
 
                     # Get nodes on same layer using dictionary
