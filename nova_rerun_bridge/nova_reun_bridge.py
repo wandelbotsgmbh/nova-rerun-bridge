@@ -6,7 +6,7 @@ from typing import Dict
 import rerun as rr
 from loguru import logger
 from nova import MotionGroup
-from nova.actions import Action, CombinedActions
+from nova.actions import Action, CombinedActions, WriteAction
 from nova.api import models
 from nova.core.nova import Nova
 from wandelbots_api_client.models import (
@@ -217,20 +217,23 @@ class NovaRerunBridge:
 
         poses = CombinedActions(items=tuple(actions)).poses()
         positions = []
+        point_colors = []
+        use_red = False
 
-        # Collect all positions
-        for pose in poses:
-            logger.debug(f"Pose: {pose}")
-            positions.append([pose.position.x, pose.position.y, pose.position.z])
+        # Collect all positions and determine colors
+        for i, action in enumerate(actions):
+            if isinstance(action, WriteAction):
+                use_red = True
+            if i < len(poses):  # Only process if there's a corresponding pose
+                pose = poses[i]
+                logger.debug(f"Pose: {pose}")
+                positions.append([pose.position.x, pose.position.y, pose.position.z])
+                point_colors.append(colors.colors[1] if use_red else colors.colors[9])
 
         # Log all positions at once
         rr.log(
             "motion/actions",
-            rr.Points3D(
-                positions,
-                colors=[colors.colors[0]] * len(positions),  # Green points
-                radii=rr.Radius.ui_points([5.0]),
-            ),
+            rr.Points3D(positions, colors=point_colors, radii=rr.Radius.ui_points([5.0])),
             timeless=True,
             static=True,
         )
