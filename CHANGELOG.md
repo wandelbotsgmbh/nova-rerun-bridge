@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.26.0 (2025-02-02)
+
+### Features
+
+- Add example for coordinated robot movements and enhance NovaRerunBridge functionality
+  ([`4dc3f65`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/4dc3f659636cfd84733a4fd44070cbe0ad998f59))
+
+
 ## v0.25.0 (2025-02-02)
 
 ### Features
