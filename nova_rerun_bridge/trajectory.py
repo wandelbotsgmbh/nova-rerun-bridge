@@ -109,6 +109,15 @@ def log_motion(
             _last_end_time = effective_offset + trajectory[-1].time
 
 
+def continue_after_sync():
+    global _last_end_time, _last_offset
+
+    effective_offset = _last_end_time + _last_offset
+
+    _last_offset = 0
+    _last_end_time = effective_offset
+
+
 def log_trajectory_path(
     motion_id: str, trajectory: List[models.TrajectorySample], motion_group: str
 ):

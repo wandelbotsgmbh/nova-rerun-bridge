@@ -20,7 +20,7 @@ from nova_rerun_bridge.collision_scene import log_collision_scenes
 from nova_rerun_bridge.consts import RECORDING_INTERVAL, TIME_INTERVAL_NAME
 from nova_rerun_bridge.helper_scripts.download_models import get_project_root
 from nova_rerun_bridge.stream_state import stream_motion_group
-from nova_rerun_bridge.trajectory import TimingMode, log_motion
+from nova_rerun_bridge.trajectory import TimingMode, continue_after_sync, log_motion
 
 
 class NovaRerunBridge:
@@ -168,6 +168,9 @@ class NovaRerunBridge:
         await self.log_motion(
             load_plan_response.motion, timing_mode=timing_mode, time_offset=time_offset
         )
+
+    def continue_after_sync(self) -> None:
+        continue_after_sync()
 
     async def log_error_feedback(
         self, error_feedback: PlanTrajectoryFailedResponseErrorFeedback
