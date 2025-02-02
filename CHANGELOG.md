@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.25.0 (2025-02-02)
+
+### Features
+
+- Add example for moving robot and setting I/Os; enhance logging for actions
+  ([`2ab97f9`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/2ab97f96d7cf6d19d647c6d52e3c140a05ede746))
+
+
 ## v0.24.0 (2025-02-01)
 
 ### Features
