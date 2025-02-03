@@ -27,7 +27,6 @@ async def process_motions():
     # use http://api-gateway:8080 on prod instances
     async with Nova(host="http://api-gateway:8080") as nova:
         motion_api = nova._api_client.motion_api
-        motion_group_api = nova._api_client.motion_group_api
 
         try:
             motions = await motion_api.list_motions("cell")
@@ -60,15 +59,7 @@ async def process_motions():
 
                         await nova_bridge.log_collision_scenes()
 
-                        # Configure logging blueprints only if motion_group_list has changed
-                        motion_groups = await motion_group_api.list_motion_groups("cell")
-                        motion_group_list = [
-                            active_motion_group.motion_group
-                            for active_motion_group in motion_groups.instances
-                        ]
-                        if motion_group_list != previous_motion_group_list:
-                            await nova_bridge.setup_blueprint()
-                            previous_motion_group_list = motion_group_list
+                        await nova_bridge.setup_blueprint()
 
                         if motion_id in processed_motion_ids:
                             continue
@@ -107,7 +98,9 @@ async def main():
 
     rr.init(application_id="nova", recording_id="nova_live", spawn=False)
     rr.save("nova.rrd")
-    rr.serve_web(web_port=3000, default_blueprint=get_blueprint(motion_group_list))
+    rr.serve_web(
+        web_port=3000, default_blueprint=get_blueprint(motion_group_list), server_memory_limit="1MB"
+    )
 
     # Setup scheduler
     scheduler = AsyncIOScheduler()
