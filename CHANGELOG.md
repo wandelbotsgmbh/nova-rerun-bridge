@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.26.4 (2025-02-03)
+
+### Bug Fixes
+
+- Save ram by serving the app from same python process
+  ([`d7514c4`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/d7514c4888e5942c8c8af663db999fafe54702bc))
+
+
 ## v0.26.3 (2025-02-03)
 
 ### Bug Fixes
