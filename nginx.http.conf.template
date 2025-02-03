@@ -7,11 +7,10 @@ server {
     }
 
     location = $BASE_PATH {
-        set $ws_protocol "ws";
-        if ($http_x_forwarded_proto = "https") {
-            set $ws_protocol "wss";
+        if ($http_x_forwarded_scheme = "https") {
+            return 301 $scheme://$http_host$BASE_PATH/?url=wss://$http_host$BASE_PATH/ws/;
         }
-        return 301 $scheme://$http_host$BASE_PATH/?url=$ws_protocol://$http_host$BASE_PATH/ws/;
+        return 301 $scheme://$http_host$BASE_PATH/?url=ws://$http_host$BASE_PATH/ws/;
     }
 
     location = $BASE_PATH/ws {
