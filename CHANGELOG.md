@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.26.3 (2025-02-03)
+
+### Bug Fixes
+
+- Update Nova API host for production instances
+  ([`91c1dbb`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/91c1dbb542ca3459d796dd66af1949bd6b7c74c4))
+
+
 ## v0.26.2 (2025-02-03)
 
 ### Bug Fixes
