@@ -3,3 +3,4 @@ name: rerun
 generatedTs: 1731483935195
 type: app
 generatorVersion: 0.0.125
+port: 3001
