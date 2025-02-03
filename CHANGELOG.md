@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.26.6 (2025-02-03)
+
+### Bug Fixes
+
+- Update motion group handling in main function
+  ([`b743b23`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/b743b2384c473e067d141ab408c94b4193c846bc))
+
+
 ## v0.26.5 (2025-02-03)
 
 ### Bug Fixes
