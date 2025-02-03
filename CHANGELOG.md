@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.26.5 (2025-02-03)
+
+### Bug Fixes
+
+- Always refresh blueprint
+  ([`a63a892`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/a63a89208acda56b635d07ba59f8773574b19b00))
+
+
 ## v0.26.4 (2025-02-03)
 
 ### Bug Fixes
