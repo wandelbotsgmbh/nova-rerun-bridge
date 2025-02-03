@@ -7,7 +7,6 @@ envsubst '${BASE_PATH}' < /app/nginx.http.conf.template > /etc/nginx/conf.d/defa
 nginx &
 
 # Start the Python processes
-python -m rerun --serve-web --web-viewer-port 3000 --hide-welcome-screen --expect-data-soon &
 python /app/nova_rerun_bridge/polling/populate.py &
 
 # Wait for all background processes to finish

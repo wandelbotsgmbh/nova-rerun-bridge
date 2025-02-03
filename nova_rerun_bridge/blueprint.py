@@ -263,7 +263,7 @@ def create_motion_group_tabs(
     )
 
 
-def send_blueprint(motion_group_list: List[str]) -> None:
+def get_blueprint(motion_group_list: List[str]) -> rrb.Blueprint:
     """Send blueprint with nested tab structure."""
     for motion_group in motion_group_list:
         configure_tcp_line_colors(motion_group)
@@ -282,17 +282,20 @@ def send_blueprint(motion_group_list: List[str]) -> None:
         create_motion_group_tabs(group, time_ranges, plot_legend) for group in motion_group_list
     ]
 
-    rr.send_blueprint(
-        rrb.Blueprint(
-            rrb.Horizontal(
-                rrb.Spatial3DView(contents=contents, name="3D Nova", background=[20, 22, 35]),
-                rrb.Tabs(
-                    *motion_group_tabs,
-                    rrb.TextLogView(origin="/logs/motion", name="Motions"),
-                    rrb.TextLogView(origin="/logs", name="API Call Logs"),
-                ),
-                column_shares=[1, 0.3],
+    return rrb.Blueprint(
+        rrb.Horizontal(
+            rrb.Spatial3DView(contents=contents, name="3D Nova", background=[20, 22, 35]),
+            rrb.Tabs(
+                *motion_group_tabs,
+                rrb.TextLogView(origin="/logs/motion", name="Motions"),
+                rrb.TextLogView(origin="/logs", name="API Call Logs"),
             ),
-            collapse_panels=True,
-        )
+            column_shares=[1, 0.3],
+        ),
+        collapse_panels=True,
     )
+
+
+def send_blueprint(motion_group_list: List[str]) -> None:
+    """Send blueprint with nested tab structure."""
+    rr.send_blueprint(get_blueprint(motion_group_list))

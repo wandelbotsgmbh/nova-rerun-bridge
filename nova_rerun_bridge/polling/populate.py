@@ -6,6 +6,7 @@ from apscheduler.triggers.interval import IntervalTrigger
 from nova import Nova
 
 from nova_rerun_bridge import NovaRerunBridge
+from nova_rerun_bridge.blueprint import get_blueprint
 from nova_rerun_bridge.consts import RECORDING_INTERVAL, SCHEDULE_INTERVAL, TIME_INTERVAL_NAME
 from nova_rerun_bridge.motion_storage import load_processed_motions, save_processed_motion
 
@@ -52,7 +53,7 @@ async def process_motions():
 
                 for motion_id in new_motions:
                     async with NovaRerunBridge(
-                        nova, spawn=True, recording_id="nova_live"
+                        nova, spawn=False, recording_id="nova_live"
                     ) as nova_bridge:
                         print(f"Processing motion {motion_id}.", flush=True)
                         rr.set_time_seconds(TIME_INTERVAL_NAME, time_offset)
@@ -96,6 +97,18 @@ async def process_motions():
 
 async def main():
     """Main entry point for the application."""
+    motion_group_list = []
+    async with Nova(host="http://api-gateway:8080") as nova:
+        motion_group_api = nova._api_client.motion_group_api
+        motion_groups = await motion_group_api.list_motion_groups("cell")
+        motion_group_list = [
+            active_motion_group.motion_group for active_motion_group in motion_groups.instances
+        ]
+
+    rr.init(application_id="nova", recording_id="nova_live", spawn=False)
+    rr.save("nova.rrd")
+    rr.serve_web(web_port=3000, default_blueprint=get_blueprint(motion_group_list))
+
     # Setup scheduler
     scheduler = AsyncIOScheduler()
     scheduler.add_job(
