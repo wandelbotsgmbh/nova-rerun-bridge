@@ -1,6 +1,17 @@
 # CHANGELOG
 
 
+## v0.26.1 (2025-02-03)
+
+### Bug Fixes
+
+- Correct variable name for websocket protocol in nginx configuration
+  ([`79cb44d`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/79cb44d9252acc77be5b9f648593c7068e72370f))
+
+- Update websocket protocol handling in nginx configuration
+  ([`e92680e`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/e92680e77d9ee5be85e516749c9d303c55dc46aa))
+
+
 ## v0.26.0 (2025-02-02)
 
 ### Features
