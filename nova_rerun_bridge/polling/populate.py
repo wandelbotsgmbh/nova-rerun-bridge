@@ -88,18 +88,18 @@ async def process_motions():
 
 async def main():
     """Main entry point for the application."""
-    motion_group_list = []
+    motion_groups = []
     async with Nova(host="http://api-gateway:8080") as nova:
-        motion_group_api = nova._api_client.motion_group_api
-        motion_groups = await motion_group_api.list_motion_groups("cell")
-        motion_group_list = [
-            active_motion_group.motion_group for active_motion_group in motion_groups.instances
-        ]
+        cell = nova.cell()
+        controllers = await cell.controllers()
+        for controller in controllers:
+            for motion_group in await controller.activated_motion_groups():
+                motion_groups.append(motion_group.motion_group_id)
 
     rr.init(application_id="nova", recording_id="nova_live", spawn=False)
-    rr.save("nova.rrd")
+    rr.save("nova.rrd", default_blueprint=get_blueprint(motion_groups))
     rr.serve_web(
-        web_port=3000, default_blueprint=get_blueprint(motion_group_list), server_memory_limit="1MB"
+        web_port=3000, default_blueprint=get_blueprint(motion_groups), server_memory_limit="1MB"
     )
 
     # Setup scheduler
