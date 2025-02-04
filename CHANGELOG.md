@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.27.2 (2025-02-04)
+
+### Bug Fixes
+
+- Add API reference documentation and update index
+  ([`85b464a`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/85b464a2dc0fa4f4a0751800c91a1aa0f2e89c14))
+
+
 ## v0.27.1 (2025-02-04)
 
 ### Bug Fixes
