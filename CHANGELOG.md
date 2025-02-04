@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.26.7 (2025-02-04)
+
+### Bug Fixes
+
+- Set mounting of robot
+  ([`0607e5f`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/0607e5fd1229f7b3ba93589bf68f428f4f3dc73b))
+
+
 ## v0.26.6 (2025-02-03)
 
 ### Bug Fixes
