@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.27.1 (2025-02-04)
+
+### Bug Fixes
+
+- Add data folder
+  ([`35242b9`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/35242b96b2d7e3043a577393fce098a725d7ac8d))
+
+
 ## v0.27.0 (2025-02-04)
 
 ### Build System
