@@ -13,5 +13,5 @@ plugins:
             show_root_heading: true
 
 nav:
-  - Home: README.md
+  - Home: index.md
   - API Reference: api.md
