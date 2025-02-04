@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.27.3 (2025-02-04)
+
+### Bug Fixes
+
+- Update mkdocs configuration to use index.md as home page and install local package
+  ([`f2f6984`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/f2f698460485f55a6c181e282177423dfbed3461))
+
+
 ## v0.27.2 (2025-02-04)
 
 ### Bug Fixes
