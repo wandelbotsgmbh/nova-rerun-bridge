@@ -1,6 +1,17 @@
 # CHANGELOG
 
 
+## v0.26.8 (2025-02-04)
+
+### Bug Fixes
+
+- Refactor controller initialization and cleanup in example scripts
+  ([`2092579`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/2092579f2637aa71c4c9523fac8cfb333fc20e37))
+
+- Store logging in rrd
+  ([`60a94c5`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/60a94c5a94ef7575e1c10f0b3fdfadf65b253cc1))
+
+
 ## v0.26.7 (2025-02-04)
 
 ### Bug Fixes
