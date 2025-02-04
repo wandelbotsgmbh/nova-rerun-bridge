@@ -1,7 +1,10 @@
 import asyncio
+import json
+import os
 
 from nova import Controller, Nova
 from nova.actions import MotionSettings, Pose, jnt, ptp
+from nova.api import models
 from numpy import pi
 
 from nova_rerun_bridge import NovaRerunBridge
@@ -47,16 +50,41 @@ async def move_positioner(controller: Controller, bridge: NovaRerunBridge):
 
 
 async def main():
-    nova = Nova()
-    bridge = NovaRerunBridge(nova)
-    await bridge.setup_blueprint()
-    cell = nova.cell()
-    yaskawa = await cell.controller("yaskawa")
-    await asyncio.gather(
-        move_robot(yaskawa, bridge=bridge), move_positioner(yaskawa, bridge=bridge)
-    )
-    await nova.close()
-    await bridge.cleanup()
+    async with Nova() as nova, NovaRerunBridge(nova) as bridge:
+        await bridge.setup_blueprint()
+        cell = nova.cell()
+
+        # Load JSON configuration
+        json_path = os.path.join(
+            os.path.dirname(__file__), "yaskawa-ar1440-with-external-axis.json"
+        )
+        with open(json_path, "r") as f:
+            var_json = json.load(f)
+
+        controller = await cell._get_controller_instance("yaskawa")
+        if controller is None:
+            await nova._api_client.controller_api.add_robot_controller(
+                cell=cell._cell_id,
+                robot_controller=models.RobotController(
+                    name="yaskawa",
+                    configuration=models.RobotControllerConfiguration(
+                        models.VirtualController(
+                            type="yaskawa-ar1440",
+                            manufacturer="yaskawa",
+                            position="[0,0,0,0,0,0]",
+                            json=json.dumps(var_json),
+                        )
+                    ),
+                ),
+                completion_timeout=50,
+            )
+        controller = await cell.controller("yaskawa")
+
+        await asyncio.gather(
+            move_robot(controller, bridge=bridge), move_positioner(controller, bridge=bridge)
+        )
+
+        await cell.delete_robot_controller(controller.name)
 
 
 if __name__ == "__main__":
