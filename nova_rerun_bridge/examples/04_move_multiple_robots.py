@@ -40,6 +40,7 @@ async def move_robot(controller: Controller, bridge: NovaRerunBridge):
 async def main():
     async with Nova() as nova, NovaRerunBridge(nova) as bridge:
         cell = nova.cell()
+
         ur10 = await cell.ensure_virtual_robot_controller(
             "ur10",
             models.VirtualControllerTypes.UNIVERSALROBOTS_MINUS_UR10E,
@@ -50,6 +51,9 @@ async def main():
             models.VirtualControllerTypes.UNIVERSALROBOTS_MINUS_UR5E,
             models.Manufacturer.UNIVERSALROBOTS,
         )
+
+        # NC-1047
+        await asyncio.sleep(3)
 
         await nova._api_client.virtual_robot_setup_api.set_virtual_robot_mounting(
             cell="cell",
@@ -66,6 +70,7 @@ async def main():
             ),
         )
 
+        # NC-1047
         await asyncio.sleep(5)
 
         await bridge.setup_blueprint()

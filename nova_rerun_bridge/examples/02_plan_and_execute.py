@@ -19,9 +19,6 @@ async def test():
             models.Manufacturer.UNIVERSALROBOTS,
         )
 
-        controllers = await cell.controllers()
-        controller = controllers[0]
-
         # Connect to the controller and activate motion groups
         async with controller[0] as motion_group:
             home_joints = await motion_group.joints()
@@ -53,8 +50,6 @@ async def test():
             await bridge.log_actions(actions)
             await bridge.log_trajectory(joint_trajectory, tcp, motion_group)
             await motion_group.execute(joint_trajectory, tcp, actions=actions)
-
-        await nova.close()
 
 
 if __name__ == "__main__":

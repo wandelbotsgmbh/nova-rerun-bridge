@@ -2,6 +2,7 @@ import asyncio
 
 from nova import MotionSettings
 from nova.actions import Linear, ptp
+from nova.api import models
 from nova.core.exceptions import PlanTrajectoryFailed
 from nova.core.nova import Nova
 from nova.types import Pose
@@ -14,8 +15,11 @@ async def test():
         await bridge.setup_blueprint()
 
         cell = nova.cell()
-        controllers = await cell.controllers()
-        controller = controllers[0]
+        controller = await cell.ensure_virtual_robot_controller(
+            "ur10",
+            models.VirtualControllerTypes.UNIVERSALROBOTS_MINUS_UR10E,
+            models.Manufacturer.UNIVERSALROBOTS,
+        )
 
         # Connect to the controller and activate motion groups
         async with controller[0] as motion_group:
@@ -49,7 +53,7 @@ async def test():
                 await bridge.log_error_feedback(e.error.error_feedback)
                 return
 
-        await nova.close()
+        await cell.delete_robot_controller(controller.name)
 
 
 if __name__ == "__main__":

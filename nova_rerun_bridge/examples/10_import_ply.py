@@ -5,6 +5,7 @@ import rerun as rr
 import trimesh
 from nova import MotionSettings
 from nova.actions import jnt, ptp
+from nova.api import models
 from nova.core.nova import Nova
 from nova.types import Pose
 
@@ -52,8 +53,11 @@ async def test():
         rr.log("motion/target", rr.Points3D([green_target_point], radii=[10], colors=[[0, 255, 0]]))
 
         cell = nova.cell()
-        controllers = await cell.controllers()
-        controller = controllers[0]
+        controller = await cell.ensure_virtual_robot_controller(
+            "ur10",
+            models.VirtualControllerTypes.UNIVERSALROBOTS_MINUS_UR10E,
+            models.Manufacturer.UNIVERSALROBOTS,
+        )
 
         # Connect to the controller and activate motion groups
         async with controller[0] as motion_group:
@@ -76,7 +80,7 @@ async def test():
             await bridge.log_trajectory(joint_trajectory, tcp, motion_group)
             await motion_group.execute(joint_trajectory, tcp, actions=actions)
 
-        await nova.close()
+        await cell.delete_robot_controller(controller.name)
 
 
 if __name__ == "__main__":
