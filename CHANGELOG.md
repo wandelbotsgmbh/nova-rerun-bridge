@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.26.9 (2025-02-04)
+
+### Bug Fixes
+
+- Update Dockerfile and nginx configuration to include data directory for nova.rrd
+  ([`bc40b49`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/bc40b498240ce835054594e9fbe0dd7a7a5551a9))
+
+
 ## v0.26.8 (2025-02-04)
 
 ### Bug Fixes
