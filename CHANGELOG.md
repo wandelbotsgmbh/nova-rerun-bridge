@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.27.4 (2025-02-04)
+
+### Bug Fixes
+
+- Update API reference to use nova_rerun_bridge
+  ([`03ea49a`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/03ea49a00532fec481689afa72a0365f395f9cfc))
+
+
 ## v0.27.3 (2025-02-04)
 
 ### Bug Fixes
