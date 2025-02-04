@@ -97,10 +97,17 @@ async def main():
                 motion_groups.append(motion_group.motion_group_id)
 
     rr.init(application_id="nova", recording_id="nova_live", spawn=False)
-    rr.save("nova.rrd", default_blueprint=get_blueprint(motion_groups))
+
     rr.serve_web(
-        web_port=3000, default_blueprint=get_blueprint(motion_groups), server_memory_limit="1MB"
+        open_browser=False,
+        web_port=3000,
+        ws_port=None,
+        default_blueprint=get_blueprint(motion_groups),
+        server_memory_limit="0MB",
+        recording=rr.new_recording("nova_null"),
     )
+
+    rr.save("nova.rrd", default_blueprint=get_blueprint(motion_groups))
 
     # Setup scheduler
     scheduler = AsyncIOScheduler()

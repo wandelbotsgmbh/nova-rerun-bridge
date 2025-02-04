@@ -9,5 +9,6 @@ nginx &
 # Start the Python processes
 python /app/nova_rerun_bridge/polling/populate.py &
 
+
 # Wait for all background processes to finish
 wait
