@@ -2,6 +2,13 @@ import asyncio
 
 from nova import Controller, Nova
 from nova.actions import jnt, ptp
+from nova.api import models
+from wandelbots_api_client.models import (
+    CoordinateSystem,
+    RotationAngles,
+    RotationAngleTypes,
+    Vector3d,
+)
 
 from nova_rerun_bridge import NovaRerunBridge
 from nova_rerun_bridge.trajectory import TimingMode
@@ -31,15 +38,41 @@ async def move_robot(controller: Controller, bridge: NovaRerunBridge):
 
 
 async def main():
-    nova = Nova()
-    bridge = NovaRerunBridge(nova)
-    await bridge.setup_blueprint()
-    cell = nova.cell()
-    ur = await cell.controller("ur")
-    kuka = await cell.controller("kuka")
-    await asyncio.gather(move_robot(ur, bridge=bridge), move_robot(kuka, bridge=bridge))
-    await nova.close()
-    await bridge.cleanup()
+    async with Nova() as nova, NovaRerunBridge(nova) as bridge:
+        cell = nova.cell()
+        ur10 = await cell.ensure_virtual_robot_controller(
+            "ur10",
+            models.VirtualControllerTypes.UNIVERSALROBOTS_MINUS_UR10E,
+            models.Manufacturer.UNIVERSALROBOTS,
+        )
+        ur5 = await cell.ensure_virtual_robot_controller(
+            "ur5",
+            models.VirtualControllerTypes.UNIVERSALROBOTS_MINUS_UR5E,
+            models.Manufacturer.UNIVERSALROBOTS,
+        )
+
+        await nova._api_client.virtual_robot_setup_api.set_virtual_robot_mounting(
+            cell="cell",
+            controller="ur5",
+            id=0,
+            coordinate_system=CoordinateSystem(
+                coordinate_system="world",
+                name="mounting",
+                reference_uid="",
+                position=Vector3d(x=500, y=0, z=0),
+                rotation=RotationAngles(
+                    angles=[0, 0, 0], type=RotationAngleTypes.EULER_ANGLES_EXTRINSIC_XYZ
+                ),
+            ),
+        )
+
+        await asyncio.sleep(5)
+
+        await bridge.setup_blueprint()
+        await asyncio.gather(move_robot(ur5, bridge=bridge), move_robot(ur10, bridge=bridge))
+
+        await cell.delete_robot_controller(ur5.name)
+        await cell.delete_robot_controller(ur10.name)
 
 
 if __name__ == "__main__":
