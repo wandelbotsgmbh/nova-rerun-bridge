@@ -1,0 +1,17 @@
+site_name: Nova Rerun Bridge
+theme:
+  name: material
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [nova_rerun_bridge]
+          options:
+            show_source: true
+            show_root_heading: true
+
+nav:
+  - Home: README.md
+  - API Reference: api.md
