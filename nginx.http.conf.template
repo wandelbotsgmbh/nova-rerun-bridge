@@ -7,7 +7,7 @@ server {
     }
 
     location = $BASE_PATH/nova.rrd {
-        root /app;
+        root /app/data;
         try_files /nova.rrd =404;
     }
 

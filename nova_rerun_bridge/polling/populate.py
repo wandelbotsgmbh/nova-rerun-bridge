@@ -107,7 +107,7 @@ async def main():
         recording=rr.new_recording("nova_null"),
     )
 
-    rr.save("nova.rrd", default_blueprint=get_blueprint(motion_groups))
+    rr.save("data/nova.rrd", default_blueprint=get_blueprint(motion_groups))
 
     # Setup scheduler
     scheduler = AsyncIOScheduler()
