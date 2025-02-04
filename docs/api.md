@@ -1,3 +1,3 @@
 # API Reference
 
-::: nova_rerun
+::: nova_rerun_bridge
