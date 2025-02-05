@@ -89,10 +89,10 @@ async def test():
         async with controller[0] as motion_group:
             tcp = "Flange"
 
-            home = await motion_group.tcp_pose(tcp)
             home_joints = await motion_group.joints()
 
             """
+            home = await motion_group.tcp_pose(tcp)
             actions = [
                 ptp(home),
                 Linear(target=Pose((-100, 0, 30, 0, 0, 0)) @ home),
