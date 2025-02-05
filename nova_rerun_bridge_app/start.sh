@@ -7,7 +7,7 @@ envsubst '${BASE_PATH}' < /app/nginx.http.conf.template > /etc/nginx/conf.d/defa
 nginx &
 
 # Start the Python processes
-python /app/nova_rerun_bridge/polling/populate.py &
+python /app/populate.py &
 
 # Wait for all background processes to finish
 wait

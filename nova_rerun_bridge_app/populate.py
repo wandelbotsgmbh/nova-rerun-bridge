@@ -80,16 +80,11 @@ async def process_motions():
                         # Save the processed motion ID and trajectory time
                         save_processed_motion(motion_id, trajectory_time)
 
-                        del trajectory
-
-                        await asyncio.sleep(0.1)
-
         except Exception as e:
             print(f"Error during job execution: {e}", flush=True)
         finally:
             job_running = False
             await nova._api_client.close()
-            gc.collect()
 
 
 async def main():
@@ -119,8 +114,7 @@ async def main():
     try:
         while True:
             await asyncio.sleep(60)  # Keep the loop running
-            gc.collect()  # Regular garbage collection
-
+            gc.collect()
     except (KeyboardInterrupt, SystemExit):
         print("Shutting down gracefully.")
         scheduler.shutdown(wait=False)
