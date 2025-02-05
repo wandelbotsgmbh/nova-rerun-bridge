@@ -3,6 +3,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict
 
+import numpy as np
 import rerun as rr
 from loguru import logger
 from nova import MotionGroup
@@ -81,6 +82,42 @@ class NovaRerunBridge:
                 motion_groups.append(motion_group.motion_group_id)
 
         send_blueprint(motion_groups)
+        self.log_coordinate_system()
+
+    def log_coordinate_system(self) -> None:
+        """Log the coordinate system of the cell."""
+
+        coordinate_origins = np.zeros((3, 3))  # Origin points for x, y, z arrows
+        coordinate_vectors = (
+            np.array(
+                [
+                    [1.0, 0.0, 0.0],  # X direction
+                    [0.0, 1.0, 0.0],  # Y direction
+                    [0.0, 0.0, 1.0],  # Z direction
+                ]
+            )
+            * 200.0
+        )  # Scale factor of 200.0 for better visibility
+
+        coordinate_colors = np.array(
+            [
+                [1.0, 0.125, 0.376, 1.0],  # #ff2060 - Red/Pink for X
+                [0.125, 0.875, 0.502, 1.0],  # #20df80 - Green for Y
+                [0.125, 0.502, 1.0, 1.0],  # #2080ff - Blue for Z
+            ]
+        )
+
+        rr.log(
+            "coordinate_system_world",
+            rr.Arrows3D(
+                origins=coordinate_origins,
+                vectors=coordinate_vectors,
+                colors=coordinate_colors,
+                radii=rr.Radius.ui_points([5.0]),
+            ),
+            timeless=True,
+            static=True,
+        )
 
     async def log_collision_scenes(self) -> Dict[str, models.CollisionScene]:
         """Fetch and log all collision scenes from Nova to Rerun."""

@@ -269,7 +269,9 @@ def get_blueprint(motion_group_list: List[str]) -> rrb.Blueprint:
         configure_tcp_line_colors(motion_group)
         configure_joint_line_colors(motion_group)
 
-    contents = ["motion/**", "collision_scenes/**"] + [f"{group}/**" for group in motion_group_list]
+    contents = ["motion/**", "collision_scenes/**", "coordinate_system_world/**"] + [
+        f"{group}/**" for group in motion_group_list
+    ]
 
     time_ranges = rrb.VisibleTimeRange(
         TIME_INTERVAL_NAME,
@@ -282,9 +284,19 @@ def get_blueprint(motion_group_list: List[str]) -> rrb.Blueprint:
         create_motion_group_tabs(group, time_ranges, plot_legend) for group in motion_group_list
     ]
 
+    # Create overrides to hide collision links for each motion group by default
+    overrides = {
+        **{
+            f"motion/{group}/collision/links": [rrb.components.Visible(False)]
+            for group in motion_group_list
+        }
+    }
+
     return rrb.Blueprint(
         rrb.Horizontal(
-            rrb.Spatial3DView(contents=contents, name="3D Nova", background=[20, 22, 35]),
+            rrb.Spatial3DView(
+                contents=contents, name="3D Nova", background=[20, 22, 35], overrides=overrides
+            ),
             rrb.Tabs(
                 *motion_group_tabs,
                 rrb.TextLogView(origin="/logs/motion", name="Motions"),
