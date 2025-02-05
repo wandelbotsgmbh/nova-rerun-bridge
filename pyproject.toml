@@ -19,7 +19,7 @@ download-models = "nova_rerun_bridge.helper_scripts.download_models:update_robot
 [tool.poetry.dependencies]
 python = "^3.10"
 rerun-sdk = "^0.21.0"
-wandelbots-nova = ">=0.16"
+wandelbots-nova = ">=0.17.2"
 python-decouple = "^3.8"
 requests = "^2.32.3"
 APScheduler = "^3.11.0"
