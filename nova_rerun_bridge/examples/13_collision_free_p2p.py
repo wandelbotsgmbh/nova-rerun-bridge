@@ -23,15 +23,6 @@ async def build_collision_world(
     collision_api = nova._api_client.store_collision_components_api
     scene_api = nova._api_client.store_collision_scenes_api
 
-    # define static colliders, e.g. workpiece
-    random_vertices = [1000, 1000, 0] + 1000 * np.random.random((1000, 3))
-    collider = models.Collider(
-        shape=models.ColliderShape(
-            models.ConvexHull2(vertices=random_vertices.tolist(), shape_type="convex_hull")
-        )
-    )
-    await collision_api.store_collider(cell=cell_name, collider="workpiece", collider2=collider)
-
     # define annoying obstacle
     sphere_collider = models.Collider(
         shape=models.ColliderShape(models.Sphere2(radius=100, shape_type="sphere")),
