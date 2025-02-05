@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.28.0 (2025-02-05)
+
+### Features
+
+- Seperate apps into nova-rerun-bridge app and rerun app
+  ([`9b90a38`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/9b90a380b5346fa47adb2e287edef6ccba5e4019))
+
+
 ## v0.27.4 (2025-02-04)
 
 ### Bug Fixes
