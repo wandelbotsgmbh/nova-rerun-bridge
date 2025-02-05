@@ -108,6 +108,10 @@ def log_motion(
             _last_offset = 0
             _last_end_time = effective_offset + trajectory[-1].time
 
+    del trajectory
+    del robot
+    del visualizer
+
 
 def continue_after_sync():
     global _last_end_time, _last_offset
