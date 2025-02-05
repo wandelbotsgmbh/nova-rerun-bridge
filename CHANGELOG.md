@@ -1,6 +1,17 @@
 # CHANGELOG
 
 
+## v0.29.1 (2025-02-05)
+
+### Bug Fixes
+
+- Update context paths in GitHub workflows for Docker build
+  ([`a82e225`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/a82e225047ecc26ab60f21971b223b8c2a8a6711))
+
+- Update context paths in GitHub workflows for Docker build
+  ([`3f803fc`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/3f803fc602835bf154dffd1f21699ca6659d4f20))
+
+
 ## v0.29.0 (2025-02-05)
 
 ### Bug Fixes
