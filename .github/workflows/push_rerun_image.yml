@@ -67,7 +67,7 @@ jobs:
         id: docker_build
         uses: docker/build-push-action@v6
         with:
-          context: ./rerun_app
+          context: rerun_app/.
           push: ${{ github.ref == 'refs/heads/main' }}
           load: ${{ github.ref != 'refs/heads/main' }}
           tags: |
