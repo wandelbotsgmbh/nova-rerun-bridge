@@ -76,7 +76,7 @@ async def main():
                         )
                     ),
                 ),
-                completion_timeout=50,
+                completion_timeout=60 * 2,
             )
         controller = await cell.controller("yaskawa")
 

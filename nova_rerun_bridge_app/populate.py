@@ -1,4 +1,5 @@
 import asyncio
+import gc
 
 import rerun as rr
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -97,16 +98,6 @@ async def main():
                 motion_groups.append(motion_group.motion_group_id)
 
     rr.init(application_id="nova", recording_id="nova_live", spawn=False)
-
-    rr.serve_web(
-        open_browser=False,
-        web_port=3000,
-        ws_port=None,
-        default_blueprint=get_blueprint(motion_groups),
-        server_memory_limit="0MB",
-        recording=rr.new_recording("nova_null"),
-    )
-
     rr.save("data/nova.rrd", default_blueprint=get_blueprint(motion_groups))
 
     # Setup scheduler
@@ -122,7 +113,8 @@ async def main():
 
     try:
         while True:
-            await asyncio.sleep(3600)  # Keep the loop running
+            await asyncio.sleep(60)  # Keep the loop running
+            gc.collect()
     except (KeyboardInterrupt, SystemExit):
         print("Shutting down gracefully.")
         scheduler.shutdown(wait=False)

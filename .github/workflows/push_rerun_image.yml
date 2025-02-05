@@ -1,4 +1,4 @@
-name: Docker Build
+name: Docker Build Rerun
 
 on:
   workflow_run:
@@ -29,7 +29,7 @@ jobs:
       - name: Get version from pyproject.toml
         id: version
         run: |
-          version=$(grep '^version = ' pyproject.toml | cut -d'"' -f2)
+          version=$(grep '^version = ' rerun_app/pyproject.toml | cut -d'"' -f2)
           echo "version=$version" >> $GITHUB_OUTPUT
 
       - name: Login to Azure Container Registry
@@ -44,7 +44,7 @@ jobs:
         id: docker_build
         uses: docker/build-push-action@v6
         with:
-          context: .
+          context: ./rerun_app
           push: ${{ github.ref == 'refs/heads/main' }}
           load: ${{ github.ref != 'refs/heads/main' }}
           tags: |
