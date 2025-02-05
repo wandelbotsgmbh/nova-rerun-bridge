@@ -31,9 +31,8 @@ COPY nginx.http.conf.template .
 COPY static static
 COPY models models
 COPY data data
+COPY nova_rerun_bridge nova_rerun_bridge
 COPY start.sh /app/start.sh
-COPY populate.py /app/populate.py
-
 
 RUN chmod +x /app/start.sh
 
