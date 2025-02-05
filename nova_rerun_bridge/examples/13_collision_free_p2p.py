@@ -1,11 +1,20 @@
 import asyncio
 
 import numpy as np
+import rerun as rr
+from nova import MotionSettings
+from nova.actions import ptp
 from nova.api import models
+from nova.core.exceptions import PlanTrajectoryFailed
 from nova.core.nova import Nova
+from nova.types import Pose
 from wandelbots_api_client.models import PlanCollisionFreePTPRequest
 
 from nova_rerun_bridge import NovaRerunBridge
+
+"""
+Example of planning a collision free PTP motion. A sphere is placed in the robot's path and the robot uses collision free p2p to move around it.
+"""
 
 
 async def build_collision_world(
@@ -26,7 +35,7 @@ async def build_collision_world(
     # define annoying obstacle
     sphere_collider = models.Collider(
         shape=models.ColliderShape(models.Sphere2(radius=100, shape_type="sphere")),
-        pose=models.Pose2(position=[-100, -400, 200]),
+        pose=models.Pose2(position=[-100, -500, 200]),
     )
     await collision_api.store_collider(
         cell=cell_name, collider="annoying_obstacle", collider2=sphere_collider
@@ -52,7 +61,7 @@ async def build_collision_world(
 
     # assemble scene
     scene = models.CollisionScene(
-        colliders={"workpiece": collider, "annoying_obstacle": sphere_collider},
+        colliders={"annoying_obstacle": sphere_collider},
         motion_groups={
             "motion_group": models.CollisionMotionGroup(
                 tool={"tool_geometry": tool_collider}, link_chain=robot_link_colliders
@@ -77,9 +86,12 @@ async def test():
             models.Manufacturer.UNIVERSALROBOTS,
         )
 
-        robot_setup = await nova._api_client.motion_group_infos_api.get_optimizer_configuration(
-            "cell", controller[0].motion_group_id, "Flange"
+        robot_setup: models.OptimizerSetup = (
+            await nova._api_client.motion_group_infos_api.get_optimizer_configuration(
+                "cell", controller[0].motion_group_id, "Flange"
+            )
         )
+        robot_setup.safety_setup.global_limits.tcp_velocity_limit = 200
 
         collision_scene_id = await build_collision_world(nova, "cell", robot_setup)
 
@@ -89,17 +101,36 @@ async def test():
         async with controller[0] as motion_group:
             tcp = "Flange"
 
+            # Use default planner to move to the right of the sphere
             home_joints = await motion_group.joints()
-
-            """
             home = await motion_group.tcp_pose(tcp)
             actions = [
                 ptp(home),
-                Linear(target=Pose((-100, 0, 30, 0, 0, 0)) @ home),
-                Linear(target=Pose((-100, 0, -600, 0, 0, 0)) @ home),
-                Linear(target=Pose((-100, 0, 30, 0, 0, 0)) @ home),
-                ptp(home),
+                ptp(target=Pose((-100, -400, 600, np.pi, 0, 0))),
+                ptp(target=Pose((300, -400, 200, np.pi, 0, 0))),
             ]
+
+            for action in actions:
+                action.settings = MotionSettings(tcp_velocity_limit=200)
+
+            try:
+                joint_trajectory = await motion_group.plan(actions, tcp)
+                await bridge.log_actions(actions)
+                await bridge.log_trajectory(joint_trajectory, tcp, motion_group)
+                await motion_group.execute(joint_trajectory, tcp, actions=actions)
+            except PlanTrajectoryFailed as e:
+                await bridge.log_actions(actions)
+                await bridge.log_trajectory(e.error.joint_trajectory, tcp, motion_group)
+                await bridge.log_error_feedback(e.error.error_feedback)
+
+            rr.log(
+                "motion/target_", rr.Points3D([[-500, -400, 200]], radii=[10], colors=[(0, 255, 0)])
+            )
+
+            # Use default planner to move to the left of the sphere
+            # -> this will collide
+            # only plan don't move
+            actions = [ptp(home), ptp(target=Pose((-500, -400, 200, np.pi, 0, 0)))]
 
             for action in actions:
                 action.settings = MotionSettings(tcp_velocity_limit=200)
@@ -112,34 +143,36 @@ async def test():
                 await bridge.log_actions(actions)
                 await bridge.log_trajectory(e.error.joint_trajectory, tcp, motion_group)
                 await bridge.log_error_feedback(e.error.error_feedback)
-            """
 
-            # Plan collision free PTP
+            # Plan collision free PTP motion around the sphere
             scene_api = nova._api_client.store_collision_scenes_api
             collision_scene = await scene_api.get_stored_collision_scene(
                 cell="cell", scene=collision_scene_id
             )
 
-            """
-            robot_setup: OptimizerSetup = Field(description="The robot setup as returned from [getOptimizerConfiguration](getOptimizerConfiguration) endpoint.")
-            start_joint_position: List[Union[StrictFloat, StrictInt]]
-            target: PlanCollisionFreePTPRequestTarget
-            static_colliders: Optional[Dict[str, Collider]] = Field(default=None, description="A collection of identifiable colliders.")
-            collision_motion_group: Optional[CollisionMotionGroup] = Field(default=None, description="Collision motion group considered during the motion planning. ")
-            """
             planTrajectory: models.PlanTrajectoryResponse = (
                 await nova._api_client.motion_api.plan_collision_free_ptp(
                     cell="cell",
                     plan_collision_free_ptp_request=PlanCollisionFreePTPRequest(
                         robot_setup=robot_setup,
                         start_joint_position=home_joints,
-                        target=models.PlanCollisionFreePTPRequestTarget([400, 0, 100, 0, 0, 0]),
+                        target=models.PlanCollisionFreePTPRequestTarget(
+                            models.Pose2(position=[-500, -400, 200], orientation=[np.pi, 0, 0])
+                        ),
                         static_colliders=collision_scene.colliders,
                         collision_motion_group=collision_scene.motion_groups["motion_group"],
                     ),
                 )
             )
-            joint_trajectory = planTrajectory.response.actual_instance.joint_trajectory
+
+            if isinstance(
+                planTrajectory.response.actual_instance, models.PlanTrajectoryFailedResponse
+            ):
+                joint_trajectory = planTrajectory.response.actual_instance.joint_trajectory
+                await bridge.log_trajectory(joint_trajectory, tcp, motion_group)
+                raise PlanTrajectoryFailed(planTrajectory.response.actual_instance)
+
+            joint_trajectory = planTrajectory.response.actual_instance
             await bridge.log_trajectory(joint_trajectory, tcp, motion_group)
 
         # await cell.delete_robot_controller(controller.name)
