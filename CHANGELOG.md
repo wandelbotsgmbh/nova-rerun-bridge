@@ -1,6 +1,19 @@
 # CHANGELOG
 
 
+## v0.30.0 (2025-02-05)
+
+### Features
+
+- Log coordinate system by default
+  ([`95f6e0e`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/95f6e0e5a567a5919bb33d36eda29841b786becc))
+
+### Refactoring
+
+- Add collision-free PTP example
+  ([`814e074`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/814e0747c7bbd549d23d53fe130de9cde5b39122))
+
+
 ## v0.29.1 (2025-02-05)
 
 ### Bug Fixes
