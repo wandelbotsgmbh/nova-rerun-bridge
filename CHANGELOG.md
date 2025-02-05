@@ -1,6 +1,19 @@
 # CHANGELOG
 
 
+## v0.29.0 (2025-02-05)
+
+### Bug Fixes
+
+- Move populate back
+  ([`b52cf3e`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/b52cf3e69f237e324812d375ca29a4b810dbbe4e))
+
+### Features
+
+- Add directory population steps for nova_rerun_bridge_app and rerun_app
+  ([`5502e9e`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/5502e9ee516dca07f51a8d2cee04e5eaac25a8fa))
+
+
 ## v0.28.0 (2025-02-05)
 
 ### Features
