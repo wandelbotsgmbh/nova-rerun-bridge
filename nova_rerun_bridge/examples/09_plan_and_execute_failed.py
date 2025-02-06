@@ -55,8 +55,6 @@ async def test():
                 await bridge.log_error_feedback(e.error.error_feedback)
                 return
 
-        await cell.delete_robot_controller(controller.name)
-
 
 if __name__ == "__main__":
     asyncio.run(test())

@@ -76,9 +76,6 @@ async def main():
         await bridge.setup_blueprint()
         await asyncio.gather(move_robot(ur5, bridge=bridge), move_robot(ur10, bridge=bridge))
 
-        await cell.delete_robot_controller(ur5.name)
-        await cell.delete_robot_controller(ur10.name)
-
 
 if __name__ == "__main__":
     asyncio.run(main())

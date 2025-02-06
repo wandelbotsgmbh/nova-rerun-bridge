@@ -88,9 +88,6 @@ async def main():
                 move_robot(mg_1, tcp, bridge, TimingMode.SYNC),
             )
 
-        await cell.delete_robot_controller(ur5.name)
-        await cell.delete_robot_controller(ur10.name)
-
 
 if __name__ == "__main__":
     asyncio.run(main())

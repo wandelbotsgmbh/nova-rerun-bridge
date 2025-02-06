@@ -157,8 +157,6 @@ async def test():
             joint_trajectory = planTrajectory.response.actual_instance
             await bridge.log_trajectory(joint_trajectory, tcp, motion_group)
 
-        # await cell.delete_robot_controller(controller.name)
-
 
 if __name__ == "__main__":
     asyncio.run(test())

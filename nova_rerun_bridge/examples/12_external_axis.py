@@ -84,8 +84,6 @@ async def main():
             move_robot(controller, bridge=bridge), move_positioner(controller, bridge=bridge)
         )
 
-        await cell.delete_robot_controller(controller.name)
-
 
 if __name__ == "__main__":
     asyncio.run(main())

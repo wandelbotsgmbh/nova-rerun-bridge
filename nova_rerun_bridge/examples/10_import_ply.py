@@ -80,8 +80,6 @@ async def test():
             await bridge.log_trajectory(joint_trajectory, tcp, motion_group)
             await motion_group.execute(joint_trajectory, tcp, actions=actions)
 
-        await cell.delete_robot_controller(controller.name)
-
 
 if __name__ == "__main__":
     asyncio.run(test())
