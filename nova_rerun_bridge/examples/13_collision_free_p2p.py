@@ -76,30 +76,21 @@ async def test():
             models.VirtualControllerTypes.UNIVERSALROBOTS_MINUS_UR5E,
             models.Manufacturer.UNIVERSALROBOTS,
         )
-
-        robot_setup: models.OptimizerSetup = (
-            await nova._api_client.motion_group_infos_api.get_optimizer_configuration(
-                "cell", controller[0].motion_group_id, "Flange"
-            )
-        )
-        robot_setup.safety_setup.global_limits.tcp_velocity_limit = 200
-
-        collision_scene_id = await build_collision_world(nova, "cell", robot_setup)
-
-        await bridge.log_collision_scenes()
-
         # Connect to the controller and activate motion groups
         async with controller[0] as motion_group:
             tcp = "Flange"
 
+            robot_setup: models.OptimizerSetup = await motion_group._get_optimizer_setup(tcp=tcp)
+            robot_setup.safety_setup.global_limits.tcp_velocity_limit = 200
+
+            collision_scene_id = await build_collision_world(nova, "cell", robot_setup)
+
+            await bridge.log_collision_scenes()
+
             # Use default planner to move to the right of the sphere
             home_joints = await motion_group.joints()
             home = await motion_group.tcp_pose(tcp)
-            actions = [
-                ptp(home),
-                ptp(target=Pose((-100, -400, 600, np.pi, 0, 0))),
-                ptp(target=Pose((300, -400, 200, np.pi, 0, 0))),
-            ]
+            actions = [ptp(home), ptp(target=Pose((300, -400, 200, np.pi, 0, 0)))]
 
             for action in actions:
                 action.settings = MotionSettings(tcp_velocity_limit=200)
