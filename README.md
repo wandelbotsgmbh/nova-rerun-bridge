@@ -152,11 +152,10 @@ The easiest way to try it out is to install the app on your nova instance. Use t
 
 ```bash
 nova catalog install rerun
+nova catalog install nova-rerun-bridge
 ```
 
-The app uses the populate script to feed the data to the rerun desktop app. The app automatically runs this script in the background. You can also run the script manually on your local machine.
-
-- run `python nova_rerun_bridge/polling/populate.py` to start a service which periodically polls the nova instance for new planned trajectories
+The nova rerun bridge will be installed on your nova instance and automatically collect all planned motions (see `nova_rerun_bridge/polling/populate.py`). If you click on the rerun bridge app, it will start a download of a nova.rrd file. You can open this file with the rerun desktop app or the installed rerun app on the ipc and see the visualization.
 
 ## Development
 
