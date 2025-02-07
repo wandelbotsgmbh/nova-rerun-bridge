@@ -1,6 +1,19 @@
 # CHANGELOG
 
 
+## v0.31.0 (2025-02-07)
+
+### Documentation
+
+- Update README to include nova-rerun-bridge installation and usage instructions
+  ([`932845e`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/932845e16b9fc717cae011e9f7e977a6e3456563))
+
+### Features
+
+- Update robot models
+  ([`9dfdb71`](https://github.com/wandelbotsgmbh/nova-rerun-bridge/commit/9dfdb71ccf010ece55a620dbfe6f0342a2b6cf88))
+
+
 ## v0.30.0 (2025-02-05)
 
 ### Features
