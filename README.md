@@ -169,20 +169,6 @@ The nova rerun bridge will be installed on your nova instance and automatically 
 skaffold dev --cleanup=false --status-check=false
 ```
 
-## Issues
-
-- rerun is able to run behind reverse proxy and the viewer can connect via web
-- rerun sdk is _not_ able to connect to rerun which is hosted behind reverse proxy
-  - [client](https://github.com/rerun-io/rerun/blob/cf9299d9205134713687e54fdf13551ed1f44bce/crates/store/re_sdk_comms/src/buffered_client.rs#L2) communicates just via sockets
-  - intermediate solution is [socat](https://linux.die.net/man/1/socat)
-
-```bash
-brew install socat
-socat TCP4-LISTEN:6666,fork SYSTEM:"curl -X POST -d @- http://172.30.2.224/some/rerun/sdk/"
-
-{ echo "load_module /usr/lib/nginx/modules/ngx_stream_module.so;"; cat /etc/nginx/nginx.conf; } > temp_file && mv temp_file /etc/nginx/nginx.conf
-```
-
 ## 📝 License
 
 This project is licensed under the Apache 2.0 License - see the LICENSE file for details.
