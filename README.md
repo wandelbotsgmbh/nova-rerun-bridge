@@ -1,3 +1,5 @@
+# This project is moved to an addon to [wandelbots-nova](https://github.com/wandelbotsgmbh/wandelbots-nova) Install with pip install "wandelbots-nova[nova-rerun-bridge]"
+
 # Nova Rerun Bridge
 
 [![PyPI version](https://badge.fury.io/py/nova-rerun-bridge.svg)](https://badge.fury.io/py/nova-rerun-bridge)
